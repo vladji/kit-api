@@ -1,7 +1,7 @@
 {
-  "name": "r-api",
+  "name": "kit-api",
   "version": "1.0.0",
-  "description": "r-api",
+  "description": "kit-api",
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development ts-node src/app.ts",
