@@ -1,4 +1,4 @@
-import { UserRole } from "./user";
+import { UserRole } from "./admin";
 
 export interface TokenPayload {
   uniqId: string;

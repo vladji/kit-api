@@ -6,7 +6,6 @@ import cors from "cors";
 import { errorHandler } from "./shared/middlewares/errorHandler";
 import { server } from "./server";
 import cookieParser from "cookie-parser";
-import authRoutes from "./modules/auth/auth.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 
 const URL_ORIGIN = process.env.URL_ORIGIN || "http://localhost:5173";
@@ -25,7 +24,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use("/api", authRoutes);
 app.use("/api", adminRoutes);
 
 server();

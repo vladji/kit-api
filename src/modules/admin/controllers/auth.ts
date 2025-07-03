@@ -1,14 +1,13 @@
 import { Request, Response } from "express";
-import { LoginRequest } from "./types";
-import { AdminSchema } from "../admin/admin.model";
-import { errorHandler } from "../../shared/middlewares/errorHandler";
-import { generateAccessToken } from "../../shared/utils/token";
+import { LoginRequest } from "../types";
+import { AdminSchema } from "../admin.model";
+import { errorHandler } from "../../../shared/middlewares/errorHandler";
+import { generateAccessToken } from "../../../shared/utils/token";
 import jwt from "jsonwebtoken";
-import { TokenPayload } from "../../types/token";
-import { CookiesKeys } from "../../config/constants";
-import { ShopSchema } from "../shop/shop.model";
-import { authenticate } from "./utils/authenticate";
-import { UserRole } from "../../types/user";
+import { TokenPayload } from "../../../types/token";
+import { CookiesKeys } from "../../../config/constants";
+import { authenticate } from "../utils/authenticate";
+import { UserRole } from "../../../types/admin";
 
 const REFRESH_SECRET = process.env.REFRESH_SECRET!;
 
@@ -31,24 +30,6 @@ export const adminLogin = async (req: LoginRequest, res: Response) => {
         roles: { [UserRole.Admin]: true },
         res
       });
-    })
-    .catch((error) => errorHandler(error, req, res));
-};
-
-export const shopLogin = async (req: LoginRequest, res: Response) => {
-  const { uniqId, password } = req.body;
-
-  ShopSchema
-    .findOne({ uniqId: { $eq: uniqId } })
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const passHash = user!.credentials!.rootPassHash!;
-
-      return authenticate(
-        { uniqId, password, passHash, roles: { [UserRole.Shop]: true }, res });
     })
     .catch((error) => errorHandler(error, req, res));
 };
