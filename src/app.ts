@@ -7,6 +7,8 @@ import { errorHandler } from "./shared/middlewares/errorHandler";
 import { server } from "./server";
 import cookieParser from "cookie-parser";
 import adminRoutes from "./modules/admin/admin.routes";
+import userRoutes from "./modules/user/user.routes";
+import rateLimit from "express-rate-limit";
 
 const URL_ORIGIN = process.env.URL_ORIGIN || "http://localhost:5173";
 
@@ -24,7 +26,18 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  limit: 150,
+  message: {
+    status: 429,
+    error: "Too many requests, please try again later"
+  }
+});
+
+app.use(limiter);
 app.use("/api", adminRoutes);
+app.use("/api", userRoutes);
 
 server();
 
