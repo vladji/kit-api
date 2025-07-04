@@ -9,7 +9,7 @@ import { CookiesKeys } from "../../../config/constants";
 import { authenticate } from "../utils/authenticate";
 import { UserRole } from "../../../types/admin";
 
-const REFRESH_SECRET = process.env.REFRESH_SECRET!;
+const TOKEN_REFRESH_SECRET = process.env.TOKEN_REFRESH_SECRET!;
 
 export const adminLogin = async (req: LoginRequest, res: Response) => {
   const { uniqId, password } = req.body;
@@ -43,7 +43,7 @@ export const refreshToken = async (req: Request, res: Response) => {
   }
 
   try {
-    const payload = jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+    const payload = jwt.verify(token, TOKEN_REFRESH_SECRET) as TokenPayload;
     const newAccessToken = generateAccessToken(
       { uniqId: payload.uniqId, roles: payload.roles });
     res.status(200).json({ accessToken: newAccessToken });

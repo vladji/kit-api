@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { TokenPayload } from "../../types/token";
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET!;
+const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
 export const verifyToken = (
   req: Request,
@@ -18,7 +18,7 @@ export const verifyToken = (
   }
 
   try {
-    req.user = jwt.verify(token, ACCESS_SECRET) as TokenPayload;
+    req.user = jwt.verify(token, TOKEN_SECRET) as TokenPayload;
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

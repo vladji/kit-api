@@ -6,7 +6,7 @@ const Schema = mongoose.Schema;
 export type StoreDocument = Document & UserProps;
 
 const UserSchema = new Schema<StoreDocument>({
-  deviceId: { type: String, required: true },
+  uniqueId: { type: String, required: true },
   storeId: {
     type: Schema.Types.ObjectId,
     ref: "store",

@@ -1,13 +1,13 @@
 import jwt from "jsonwebtoken";
 import { TokenPayload } from "../../types/token";
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET!;
-const REFRESH_SECRET = process.env.REFRESH_SECRET!;
+const TOKEN_SECRET = process.env.TOKEN_SECRET!;
+const TOKEN_REFRESH_SECRET = process.env.TOKEN_REFRESH_SECRET!;
 
 export const generateAccessToken = (data: TokenPayload) => {
-  return jwt.sign(data, ACCESS_SECRET, { expiresIn: "15m" });
+  return jwt.sign(data, TOKEN_SECRET, { expiresIn: "15m" });
 };
 
 export const generateRefreshToken = (data: TokenPayload) => {
-  return jwt.sign(data, REFRESH_SECRET, { expiresIn: "7d" });
+  return jwt.sign(data, TOKEN_REFRESH_SECRET, { expiresIn: "7d" });
 };

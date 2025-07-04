@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
 export interface UserProps {
-  deviceId: string;
+  uniqueId: string;
   storeId?: Types.ObjectId;
 }
