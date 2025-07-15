@@ -5,8 +5,16 @@ const Schema = mongoose.Schema;
 
 export type StoreDocument = Document & UserProps;
 
+const DeviceDataSchema = new Schema({
+  deviceManufacturer: String,
+  deviceOs: String,
+  deviceId: String,
+}, { _id: false });
+
 const UserSchema = new Schema<StoreDocument>({
+  type: { type: String, required: true, enum: ["client", "store"], },
   uniqueId: { type: String, required: true },
+  deviceData: DeviceDataSchema,
   storeId: {
     type: Schema.Types.ObjectId,
     ref: "store",
