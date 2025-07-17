@@ -5,4 +5,4 @@ interface LoginBody {
   password: string;
 }
 
-export type LoginRequest = Request<{}, {}, LoginBody>
+export type LoginRequest = Request<{}, {}, LoginBody>;

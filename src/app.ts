@@ -9,8 +9,7 @@ import cookieParser from "cookie-parser";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/user/user.routes";
 import rateLimit from "express-rate-limit";
-
-const URL_ORIGIN = process.env.URL_ORIGIN || "http://localhost:5173";
+import { ORIGIN } from "./config/constants";
 
 const app = express();
 
@@ -20,7 +19,7 @@ app.use(express.urlencoded({ extended: true })); // if req.body sent as form
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ["http://localhost:5173", URL_ORIGIN],
+  origin: ORIGIN,
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -35,12 +34,11 @@ const limiter = rateLimit({
   }
 });
 
-app.use(limiter);
+app.use("/api", limiter);
 app.use("/api", adminRoutes);
 app.use("/api", userRoutes);
+app.use(errorHandler);
 
 server();
-
-app.use(errorHandler);
 
 export default app;
