@@ -4,14 +4,18 @@ import express from "express";
 import compression from "compression";
 import cors from "cors";
 import { errorHandler } from "./shared/middlewares/errorHandler";
-import { server } from "./server";
 import cookieParser from "cookie-parser";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/user/user.routes";
+import chatMessagesRoutes from "./modules/chat/router/message";
 import rateLimit from "express-rate-limit";
 import { ORIGIN } from "./config/constants";
+import { createServer } from "http";
+import { server } from "./server";
 
 const app = express();
+const httpServer = createServer(app);
+export { httpServer };
 
 app.use(compression());
 app.use(express.json());
@@ -37,7 +41,8 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 app.use("/api", adminRoutes);
 app.use("/api", userRoutes);
-app.use(errorHandler);
+app.use("/api", chatMessagesRoutes);
+app.use("/api", errorHandler);
 
 server();
 
