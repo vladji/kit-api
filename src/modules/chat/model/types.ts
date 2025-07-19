@@ -10,4 +10,6 @@ export interface MessageProps {
   to: string;
   text: string;
   read: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

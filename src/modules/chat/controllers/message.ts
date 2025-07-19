@@ -11,7 +11,7 @@ export const getMessages = (req: Request, res: Response) => {
 
   MessageModel
     .find({ chatId })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: 1 })
     .then((messages) => {
       return res.status(200).json(messages);
     })

@@ -1,12 +1,13 @@
 import { Server as SocketIOServer } from "socket.io";
-import { MessageModel } from "../modules/chat/model/message";
-import { ChatDocument, ChatModel } from "../modules/chat/model/chat";
 import { CustomSocket } from "./types";
-import { composeChatId } from "../modules/chat/utils";
 import { httpServer } from "../app";
 import { ORIGIN } from "../config/constants";
+import { CHAT_SUPPORT } from "./constants";
+import { UserModel } from "../modules/user/user.model";
+import { UserRoles } from "../modules/user/types";
+import { createMessage, findChat, handleChatError, sendMessage } from "./utils";
 
-const users = new Map();
+const users = new Map<string, string>();
 
 export const registerSocketHandlers = () => {
   try {
@@ -27,50 +28,78 @@ export const registerSocketHandlers = () => {
         console.log(`✅ Registered user ${userId}`);
       });
 
-      socket.on("private_message", async ({ from, to, text }) => {
-        console.log("message", { from, to, text });
-        const chatId = composeChatId({ from, to });
-
+      socket.on("private_message", async ({ from, to, knownChatId, text }) => {
         try {
-          let chat = await ChatModel.findOne<ChatDocument>({ chatId });
-
-          if (!chat) {
-            chat = await ChatModel.create({
-              chatId,
-              members: [from, to],
-              lastMessage: text
+          if (knownChatId) {
+            const { chatId, chat } = await findChat({
+              from,
+              to,
+              lastMessage: text,
+              knownChatId
             });
-          }
 
-          if (chat) {
-            const message = await MessageModel.create({
-              chatId: chat.chatId,
+            const message = await createMessage({ chatId, from, to, text });
+
+            await sendMessage({
+              users,
               from,
               to,
               text,
-              read: false
+              chat,
+              message,
+              io
             });
 
-            await ChatModel.findOneAndUpdate({ chatId }, {
-              lastMessage: text,
+            return;
+          }
+
+          if (to === CHAT_SUPPORT) {
+            const { chatId, chat } = await findChat({
+              from,
+              to,
+              lastMessage: text
             });
 
-            const toSocketId = users.get(to);
-            if (toSocketId) {
-              io.to(toSocketId).emit("private_message", message);
-            }
+            const message = await createMessage({ chatId, from, to, text });
 
-            const fromSocketId = users.get(from);
-            if (fromSocketId) {
-              io.to(fromSocketId).emit("private_message", message);
+            const admins = await UserModel.find({
+              role: { $in: [UserRoles.Admin, UserRoles.RootAdmin] },
+              "admin.chatEnabled": true,
+            });
+
+            for (const admin of admins) {
+              const toAdmin = admin.id.toString();
+              await sendMessage({
+                users,
+                from,
+                to: toAdmin,
+                text,
+                chat,
+                message,
+                io
+              });
             }
+          } else {
+            const { chatId, chat } = await findChat({
+              from,
+              to,
+              lastMessage: text
+            });
+
+            const message = await createMessage({ chatId, from, to, text });
+
+            await sendMessage({
+              users,
+              from,
+              to,
+              text,
+              chat,
+              message,
+              io
+            });
           }
         } catch (err) {
-          if (err instanceof Error) {
-            console.error("❌ Chat error: ", err.message, err.stack);
-          } else {
-            console.error("❌ Unknown error: ", err);
-          }
+          handleChatError(err);
 
           const fromSocketId = users.get(from);
           if (fromSocketId) {
@@ -90,10 +119,6 @@ export const registerSocketHandlers = () => {
       });
     });
   } catch (err) {
-    if (err instanceof Error) {
-      console.error("❌ Chat error: ", err.message, err.stack);
-    } else {
-      console.error("❌ Unknown error: ", err);
-    }
+    handleChatError(err);
   }
 };
