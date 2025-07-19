@@ -11,16 +11,32 @@ const DeviceDataSchema = new Schema({
   deviceId: String,
 }, { _id: false });
 
+const AdminSchema = new Schema({
+  chatEnabled: { type: Boolean },
+  chatNotificationEnabled: { type: Boolean },
+}, { _id: false });
+
 const UserSchema = new Schema<StoreDocument>({
-  type: { type: String, required: true, enum: ["client", "store"], },
+  type: {
+    type: String,
+    required: true,
+    enum: ["client", "store", "admin", "root-admin"],
+  },
   uniqueId: { type: String, required: true },
   deviceData: DeviceDataSchema,
-  stores: [
-    {
+  name: { type: String },
+  avatar: { type: String },
+  admin: {
+    type: AdminSchema,
+    default: undefined
+  },
+  stores: {
+    type: [{
       type: Schema.Types.ObjectId,
       ref: "store",
-    },
-  ],
+    }],
+    default: undefined
+  },
 }, {
   timestamps: true,
   toJSON: {
@@ -29,6 +45,7 @@ const UserSchema = new Schema<StoreDocument>({
       ret.id = ret._id;
       delete ret._id;
       delete ret.__v;
+      delete ret.type;
     }
   }
 });
