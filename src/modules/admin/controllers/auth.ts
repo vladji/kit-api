@@ -23,7 +23,7 @@ export const adminLogin = async (req: LoginRequest, res: Response) => {
 
       const passHash = user!.credentials!.rootPassHash;
 
-      return authenticate({
+      authenticate({
         uniqId,
         password,
         passHash,
@@ -35,33 +35,28 @@ export const adminLogin = async (req: LoginRequest, res: Response) => {
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-  const token = req.cookies[CookiesKeys.refreshToken];
+  const token = req.body.refreshToken;
 
   if (!token) {
-    res.status(401).json({ message: "Token not found" });
+    res.status(401).json({ message: "Refresh token not found" });
     return;
   }
 
   try {
     const payload = jwt.verify(token, TOKEN_REFRESH_SECRET) as TokenPayload;
-    const newAccessToken = createAccessToken(
-      { uniqId: payload.uniqId, roles: payload.roles });
-    res.status(200).json({ accessToken: newAccessToken });
-  } catch (error) {
-    res.clearCookie(CookiesKeys.refreshToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV !== "development",
-      path: "/"
+    const newAccessToken = createAccessToken({
+      uniqId: payload.uniqId,
+      roles: payload.roles,
     });
 
+    res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({ message: "Refresh token expired" });
       return;
     }
 
     res.status(403).json({ message: "Invalid refresh token" });
-    return;
   }
 };
 

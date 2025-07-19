@@ -24,7 +24,8 @@ export const authenticate = async ({
   const isValidPass = await checkPassword(password, passHash);
 
   if (!isValidPass) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    res.status(401).json({ message: "Invalid credentials" });
+    return;
   }
 
   const adminRole: TokenUserRoles = uniqId === ROOT_ADMIN ? { [UserRoles.RootAdmin]: true } : roles;
