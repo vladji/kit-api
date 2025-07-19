@@ -10,5 +10,5 @@ export interface UserProps {
   type: "client" | "store";
   uniqueId: string;
   deviceData: DeviceDataProps;
-  storeId?: Types.ObjectId;
+  stores?: Types.ObjectId[];
 }

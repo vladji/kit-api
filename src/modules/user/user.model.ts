@@ -15,10 +15,12 @@ const UserSchema = new Schema<StoreDocument>({
   type: { type: String, required: true, enum: ["client", "store"], },
   uniqueId: { type: String, required: true },
   deviceData: DeviceDataSchema,
-  storeId: {
-    type: Schema.Types.ObjectId,
-    ref: "store",
-  }
+  stores: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "store",
+    },
+  ],
 }, {
   timestamps: true,
   toJSON: {
