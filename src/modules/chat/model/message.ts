@@ -11,6 +11,12 @@ const MessageSchema = new mongoose.Schema<MessageDocument>({
   read: { type: Boolean }
 }, {
   timestamps: true,
+  toJSON: {
+    transform(doc, ret) {
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
 });
 
 export const MessageModel = mongoose.model("message", MessageSchema);
