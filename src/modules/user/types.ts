@@ -19,7 +19,7 @@ interface AdminProps {
 }
 
 export interface UserProps {
-  type: UserRoles;
+  type: UserRoles[];
   uniqueId: string;
   deviceData: DeviceDataProps;
   createdAt: Date;

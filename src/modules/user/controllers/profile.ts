@@ -32,7 +32,7 @@ export const createUser = async (
   res: Response
 ) => {
   const data = req.body;
-  data.type = UserRoles.Client;
+  data.type = [UserRoles.Client];
 
   UserModel
     .create(data)

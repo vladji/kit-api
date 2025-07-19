@@ -18,9 +18,9 @@ const AdminSchema = new Schema({
 
 const UserSchema = new Schema<StoreDocument>({
   type: {
-    type: String,
-    required: true,
+    type: [String],
     enum: ["client", "store", "admin", "root-admin"],
+    required: true,
   },
   uniqueId: { type: String, required: true },
   deviceData: DeviceDataSchema,
