@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { TokenPayload } from "../../types/token";
+import { TokenPayload } from "./types";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 

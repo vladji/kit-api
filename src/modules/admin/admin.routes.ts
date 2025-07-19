@@ -1,26 +1,9 @@
-import express, { Response } from "express";
-import { LoginRequest } from "./types";
+import express from "express";
 import { adminLogin } from "./controllers/auth";
-import { errorHandler } from "../../shared/middlewares/errorHandler";
+import { checkApiKey } from "../../shared/middlewares/checkApiKey";
 
 const router = express.Router();
 
-router.post(
-  "/admin/login",
-  async (req: LoginRequest, res: Response) => {
-    try {
-      const { uniqId } = req.body;
-      if (uniqId === process.env.ADMIN_NAME) {
-        return adminLogin(req, res);
-      }
-
-      res.status(403).json(
-        { message: "You are not authorized to access this page" });
-      return;
-    } catch (err) {
-      return errorHandler(err, req, res);
-    }
-  }
-);
+router.post("/admin/login", checkApiKey, adminLogin);
 
 export default router;

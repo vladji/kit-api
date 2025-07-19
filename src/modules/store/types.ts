@@ -1,4 +1,4 @@
-import { WeekDays } from "../../types/common";
+import { WeekDays } from "../../app/types/common";
 import { Types } from "mongoose";
 
 interface StoreWorkingTime {

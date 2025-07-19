@@ -1,4 +1,4 @@
-/// <reference path="./types/express/index.d.ts" />
+/// <reference path="./app/types/express/index.d.ts" />
 import "dotenv/config";
 import express from "express";
 import compression from "compression";

@@ -2,12 +2,12 @@ import { Request, Response } from "express";
 import { LoginRequest } from "../types";
 import { AdminSchema } from "../admin.model";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
-import { generateAccessToken } from "../../../shared/utils/token";
+import { createAccessToken } from "../../../app/jwt/create";
 import jwt from "jsonwebtoken";
-import { TokenPayload } from "../../../types/token";
+import { TokenPayload } from "../../../app/jwt/types";
 import { CookiesKeys } from "../../../config/constants";
 import { authenticate } from "../utils/authenticate";
-import { UserRole } from "../../../types/admin";
+import { UserRoles } from "../../user/types";
 
 const TOKEN_REFRESH_SECRET = process.env.TOKEN_REFRESH_SECRET!;
 
@@ -27,7 +27,7 @@ export const adminLogin = async (req: LoginRequest, res: Response) => {
         uniqId,
         password,
         passHash,
-        roles: { [UserRole.Admin]: true },
+        roles: { [UserRoles.Admin]: true },
         res
       });
     })
@@ -44,7 +44,7 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   try {
     const payload = jwt.verify(token, TOKEN_REFRESH_SECRET) as TokenPayload;
-    const newAccessToken = generateAccessToken(
+    const newAccessToken = createAccessToken(
       { uniqId: payload.uniqId, roles: payload.roles });
     res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
