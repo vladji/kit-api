@@ -7,7 +7,7 @@ import { errorHandler } from "./shared/middlewares/errorHandler";
 import cookieParser from "cookie-parser";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/user/user.routes";
-import chatMessagesRoutes from "./modules/chat/router/message";
+import chatRoutes from "./modules/chat/chat.router";
 import rateLimit from "express-rate-limit";
 import { ORIGIN } from "./config/constants";
 import { createServer } from "http";
@@ -41,7 +41,7 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 app.use("/api", adminRoutes);
 app.use("/api", userRoutes);
-app.use("/api", chatMessagesRoutes);
+app.use("/api", chatRoutes);
 app.use("/api", errorHandler);
 
 server();
