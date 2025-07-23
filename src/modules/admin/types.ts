@@ -1,8 +1,9 @@
-import { Request } from "express";
-
-interface LoginBody {
+export interface AdminProps {
   uniqId: string;
-  password: string;
+  disabled: boolean;
+  chatEnabled: boolean;
+  chatNotificationEnabled: boolean;
+  credentials: {
+    rootPassHash: string;
+  };
 }
-
-export type LoginRequest = Request<{}, {}, LoginBody>;

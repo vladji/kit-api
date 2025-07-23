@@ -3,9 +3,9 @@ import { CustomSocket } from "./types";
 import { httpServer } from "../app";
 import { ORIGIN } from "../config/constants";
 import { CHAT_SUPPORT } from "./constants";
-import { UserModel } from "../modules/user/user.model";
-import { UserRoles } from "../modules/user/types";
 import { createMessage, findChat, handleChatError, sendMessage } from "./utils";
+import { AdminModel } from "../modules/admin/admin.model";
+import { socketAuthMiddleware } from "./socketAuthMiddleware";
 
 const users = new Map<string, string>();
 
@@ -18,6 +18,8 @@ export const registerSocketHandlers = () => {
         credentials: true
       }
     });
+
+    io.use(socketAuthMiddleware);
 
     io.on("connection", (socket: CustomSocket) => {
       console.log("🔌 New client connected:", socket.id);
@@ -62,9 +64,9 @@ export const registerSocketHandlers = () => {
 
             const message = await createMessage({ chatId, from, to, text });
 
-            const admins = await UserModel.find({
-              role: { $in: [UserRoles.Admin, UserRoles.RootAdmin] },
-              "admin.chatEnabled": true,
+            const admins = await AdminModel.find({
+              disabled: false,
+              chatEnabled: true,
             });
 
             for (const admin of admins) {

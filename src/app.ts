@@ -5,7 +5,7 @@ import compression from "compression";
 import cors from "cors";
 import { errorHandler } from "./shared/middlewares/errorHandler";
 import cookieParser from "cookie-parser";
-import adminRoutes from "./modules/admin/admin.routes";
+import adminRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/user/user.routes";
 import chatRoutes from "./modules/chat/chat.router";
 import rateLimit from "express-rate-limit";

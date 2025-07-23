@@ -13,11 +13,6 @@ interface DeviceDataProps {
   deviceId: string;
 }
 
-interface AdminProps {
-  chatEnabled: boolean;
-  chatNotificationEnabled: boolean;
-}
-
 export interface UserProps {
   type: UserRoles[];
   uniqueId: string;
@@ -26,6 +21,5 @@ export interface UserProps {
   updatedAt: Date;
   name?: string;
   avatar?: string;
-  admin?: AdminProps;
   stores?: Types.ObjectId[];
 }

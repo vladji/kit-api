@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { checkPassword } from "../../../app/crypto";
+import { checkPassword } from "../../../app/crypto/checkPassword";
 import { createAccessToken, createRefreshToken } from "../../../app/jwt/create";
 import { TokenUserRoles } from "../../../app/jwt/types";
 import { UserRoles } from "../../user/types";
@@ -25,13 +25,28 @@ export const authenticate = async ({
 
   if (!isValidPass) {
     res.status(401).json({ message: "Invalid credentials" });
-    return;
+    return {
+      accessToken: null,
+      refreshToken: null,
+    };
   }
 
   const adminRole: TokenUserRoles = uniqId === ROOT_ADMIN ? { [UserRoles.RootAdmin]: true } : roles;
 
-  const accessToken = createAccessToken({ uniqId, roles: adminRole });
-  const refreshToken = createRefreshToken({ uniqId, roles: adminRole });
+  const accessToken = createAccessToken({
+    uniqId,
+    roles: adminRole,
+    createdAt: Date.now(),
+  });
 
-  res.status(200).json({ accessToken, refreshToken });
+  const refreshToken = createRefreshToken({
+    uniqId,
+    roles: adminRole,
+    createdAt: Date.now(),
+  });
+
+  return {
+    accessToken,
+    refreshToken
+  };
 };

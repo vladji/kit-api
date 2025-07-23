@@ -11,11 +11,6 @@ const DeviceDataSchema = new Schema({
   deviceId: String,
 }, { _id: false });
 
-const AdminSchema = new Schema({
-  chatEnabled: { type: Boolean },
-  chatNotificationEnabled: { type: Boolean },
-}, { _id: false });
-
 const UserSchema = new Schema<StoreDocument>({
   type: {
     type: [String],
@@ -26,10 +21,6 @@ const UserSchema = new Schema<StoreDocument>({
   deviceData: DeviceDataSchema,
   name: { type: String },
   avatar: { type: String },
-  admin: {
-    type: AdminSchema,
-    default: undefined
-  },
   stores: {
     type: [{
       type: Schema.Types.ObjectId,

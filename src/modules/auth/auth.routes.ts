@@ -4,7 +4,8 @@ import { checkApiKey } from "../../shared/middlewares/checkApiKey";
 
 const router = express.Router();
 
-router.post("/admin/login", checkApiKey, adminLogin);
-router.post("/admin/refresh-token", checkApiKey, refreshToken);
+
+router.post("/auth/admin/login", checkApiKey, adminLogin);
+router.post("/auth/refresh-token", checkApiKey, refreshToken);
 
 export default router;
