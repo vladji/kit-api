@@ -1,16 +1,61 @@
 import { Request, Response } from "express";
 import { ChatModel } from "../model/chat";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
+import { pagination } from "../../../shared/utils/pagination";
 
-export const getAllChats = async (req: Request, res: Response) => {
-  const member = req.query.member;
+export const getMemberAllChats = async (req: Request, res: Response) => {
+  try {
+    const {
+      page, limit, skip
+    } = pagination(req);
 
-  await ChatModel
-    .find({ members: member })
-    .sort({ updatedAt: -1 })
-    .then((chats) => {
-      return res.status(200).json(chats);
-    })
-    .catch((err) => errorHandler(err, req, res));
+    const member = req.query.member;
+
+    const [chats, total] = await Promise.all([
+      ChatModel
+        .find({ members: member })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ChatModel.countDocuments({ members: member }),
+    ]);
+
+    res.status(200).json({
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      chats,
+    });
+    return;
+  } catch (err) {
+    return errorHandler(err, req, res);
+  }
+};
+
+export const getAllSupportChats = async (req: Request, res: Response) => {
+  try {
+    const {
+      page, limit, skip
+    } = pagination(req);
+
+    const [chats, total] = await Promise.all([
+      ChatModel
+        .find({ support: true })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ChatModel.countDocuments({ support: true }),
+    ]);
+
+    res.status(200).json({
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      chats,
+    });
+    return;
+  } catch (err) {
+    return errorHandler(err, req, res);
+  }
 };
 

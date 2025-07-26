@@ -43,6 +43,7 @@ export const socketAuthMiddleware = async (
       socket.admin = admin;
       socket.userId = admin.id;
     }
+    
     next();
   } catch (err) {
     console.error("❌ Socket auth error:", err);

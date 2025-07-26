@@ -9,7 +9,7 @@ export const checkApiKey = (
 ) => {
   const clientKey = req.headers["x-api-key"];
   if (clientKey !== API_KEY) {
-    res.status(403).json({ error: "Access denied" });
+    res.status(403).json({ message: "Access denied" });
     return;
   }
   next();
