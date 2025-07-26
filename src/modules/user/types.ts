@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 
 export enum UserRoles {
-  Client = "client",
   Store = "store",
   Admin = "admin",
   RootAdmin = "root-admin"
@@ -14,12 +13,22 @@ interface DeviceDataProps {
 }
 
 export interface UserProps {
-  type: UserRoles[];
   uniqueId: string;
   deviceData: DeviceDataProps;
   createdAt: Date;
   updatedAt: Date;
-  name?: string;
+  publicName?: string;
   avatar?: string;
   stores?: Types.ObjectId[];
+}
+
+export interface UserPropsClient {
+  id: string;
+  uniqueId: string;
+  deviceData: DeviceDataProps;
+  createdAt: Date;
+  updatedAt: Date;
+  publicName?: string;
+  avatar?: string;
+  storeId?: string;
 }

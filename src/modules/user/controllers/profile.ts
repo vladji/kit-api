@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { UserModel } from "../user.model";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
-import { UserProps, UserRoles } from "../types";
+import { UserProps, UserPropsClient } from "../types";
 
 //const user = await UserModel.findById(id).populate("storeId");
 
@@ -32,12 +32,28 @@ export const createUser = async (
   res: Response
 ) => {
   const data = req.body;
-  data.type = [UserRoles.Client];
 
   UserModel
     .create(data)
     .then((data) => {
       return res.status(201).json({ user: data });
+    })
+    .catch((err) => errorHandler(err, req, res));
+};
+
+export const updateUser = async (
+  req: Request<{}, {}, UserPropsClient>,
+  res: Response
+) => {
+  const { id, ...data } = req.body;
+
+  UserModel
+    .findByIdAndUpdate(id, data, { new: true, runValidators: true })
+    .then((data) => {
+      if (!data) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json({ user: data });
     })
     .catch((err) => errorHandler(err, req, res));
 };

@@ -12,14 +12,9 @@ const DeviceDataSchema = new Schema({
 }, { _id: false });
 
 const UserSchema = new Schema<StoreDocument>({
-  type: {
-    type: [String],
-    enum: ["client", "store", "admin", "root-admin"],
-    required: true,
-  },
   uniqueId: { type: String, required: true },
   deviceData: DeviceDataSchema,
-  name: { type: String },
+  publicName: { type: String },
   avatar: { type: String },
   stores: {
     type: [{
