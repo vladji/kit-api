@@ -11,7 +11,7 @@ import chatRoutes from "./modules/chat/chat.router";
 import rateLimit from "express-rate-limit";
 import { ORIGIN } from "./config/constants";
 import { createServer } from "http";
-import { server } from "./server";
+import { server } from "./app/server";
 
 const app = express();
 const httpServer = createServer(app);

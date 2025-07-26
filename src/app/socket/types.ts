@@ -1,6 +1,5 @@
 import { Socket } from "socket.io";
-
-import { AdminProps } from "../modules/admin/types";
+import { AdminProps } from "../../modules/admin/types";
 import { Types } from "mongoose";
 
 export interface CustomSocket extends Socket {

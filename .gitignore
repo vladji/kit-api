@@ -10,4 +10,5 @@ ADMIN.md
 ARCH.md
 sample.ts
 
-test.js
+src/test.ts
+test.ts

@@ -1,6 +1,9 @@
-import { composeChatId } from "../modules/chat/utils";
-import { ChatDocument, ChatModel } from "../modules/chat/model/chat";
-import { MessageDocument, MessageModel } from "../modules/chat/model/message";
+import { composeChatId } from "../../modules/chat/utils";
+import { ChatDocument, ChatModel } from "../../modules/chat/model/chat";
+import {
+  MessageDocument,
+  MessageModel
+} from "../../modules/chat/model/message";
 import { DefaultEventsMap, Server } from "socket.io";
 import { Types } from "mongoose";
 

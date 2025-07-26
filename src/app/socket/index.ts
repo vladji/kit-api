@@ -1,11 +1,11 @@
 import { Server as SocketIOServer } from "socket.io";
 import { CustomSocket } from "./types";
-import { httpServer } from "../app";
-import { ORIGIN } from "../config/constants";
+import { httpServer } from "../../app";
+import { ORIGIN } from "../../config/constants";
 import { CHAT_SUPPORT } from "./constants";
 import { createMessage, findChat, handleChatError, sendMessage } from "./utils";
-import { AdminModel } from "../modules/admin/admin.model";
-import { socketAuthMiddleware } from "./socketAuthMiddleware";
+import { AdminModel } from "../../modules/admin/admin.model";
+import { socketAuthMiddleware } from "./authMiddleware";
 import { Types } from "mongoose";
 
 const users = new Map<Types.ObjectId, string>();

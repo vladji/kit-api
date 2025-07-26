@@ -1,8 +1,8 @@
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { CustomSocket, SocketError } from "./types";
-import { AdminDocument, AdminModel } from "../modules/admin/admin.model";
-import { TokenPayload } from "../app/jwt/types";
-import { UserRoles } from "../modules/user/types";
+import { AdminDocument, AdminModel } from "../../modules/admin/admin.model";
+import { TokenPayload } from "../jwt/types";
+import { UserRoles } from "../../modules/user/types";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
@@ -43,7 +43,7 @@ export const socketAuthMiddleware = async (
       socket.admin = admin;
       socket.userId = admin.id;
     }
-    
+
     next();
   } catch (err) {
     console.error("❌ Socket auth error:", err);
