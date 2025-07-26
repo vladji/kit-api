@@ -1,19 +1,37 @@
 import { Request, Response } from "express";
 import { MessageModel } from "../model/message";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
+import { pagination } from "../../../shared/utils/pagination";
 
-export const getMessages = (req: Request, res: Response) => {
-  const chatId = req.query.chatId as string;
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const {
+      page, limit, skip
+    } = pagination(req);
 
-  if (!chatId) {
-    res.status(400).json({ error: "chatId is required" });
+    const chatId = req.query.chatId as string;
+
+    if (!chatId) {
+      res.status(400).json({ error: "chatId is required" });
+    }
+
+    const [messages, total] = await Promise.all([
+      MessageModel
+        .find({ chatId })
+        .sort({ createdAt: 1 })
+        .skip(skip)
+        .limit(limit),
+      MessageModel.countDocuments({ chatId })
+    ]);
+
+    res.status(200).json({
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      messages,
+    });
+    return;
+  } catch (err) {
+    return errorHandler(err, req, res);
   }
-
-  MessageModel
-    .find({ chatId })
-    .sort({ createdAt: 1 })
-    .then((messages) => {
-      return res.status(200).json(messages);
-    })
-    .catch((err) => errorHandler(err, req, res));
 };
