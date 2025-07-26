@@ -9,15 +9,15 @@ export const getMemberAllChats = async (req: Request, res: Response) => {
       page, limit, skip
     } = pagination(req);
 
-    const member = req.query.member;
+    const memberId = req.query.memberId;
 
     const [chats, total] = await Promise.all([
       ChatModel
-        .find({ members: member })
+        .find({ "members.id": memberId })
         .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit),
-      ChatModel.countDocuments({ members: member }),
+      ChatModel.countDocuments({ "members.id": memberId }),
     ]);
 
     res.status(200).json({

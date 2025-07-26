@@ -6,10 +6,11 @@ import {
 } from "../../modules/chat/model/message";
 import { DefaultEventsMap, Server } from "socket.io";
 import { Types } from "mongoose";
+import { ChatMemberProps } from "../../modules/chat/model/types";
 
 interface FindChatProps {
-  from: string;
-  to: string;
+  from: ChatMemberProps;
+  to: ChatMemberProps;
   lastMessage: string;
   knownChatId?: string;
   support?: boolean;
@@ -48,8 +49,8 @@ export const findChat = async ({
 
 interface CreateMessageProps {
   chatId: string;
-  from: string;
-  to: string;
+  from: ChatMemberProps;
+  to: ChatMemberProps;
   text: string;
 }
 
@@ -61,17 +62,17 @@ export const createMessage = async ({
 }: CreateMessageProps) => {
   return await MessageModel.create({
     chatId,
-    from,
-    to,
+    from: from.id,
+    to: to.id,
     text,
     read: false,
-  });
+  } as MessageDocument);
 };
 
 interface SendMessageProps {
   users: Map<Types.ObjectId, string>;
-  from: Types.ObjectId;
-  to: Types.ObjectId;
+  from: ChatMemberProps;
+  to: ChatMemberProps;
   text: string;
   chat: ChatDocument;
   message: MessageDocument;
@@ -87,7 +88,7 @@ export const sendMessage = async ({
   message,
   io
 }: SendMessageProps) => {
-  [from, to].forEach((userId) => {
+  [from.id, to.id].forEach((userId) => {
     const socketId = users.get(userId);
     if (socketId) {
       io.to(socketId).emit("private_message", message);
