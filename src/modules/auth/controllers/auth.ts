@@ -23,6 +23,7 @@ export const adminLogin = async (req: LoginRequest, res: Response) => {
       const passHash = admin!.credentials!.rootPassHash;
 
       const { accessToken, refreshToken } = await authenticate({
+        id: admin.id,
         uniqId,
         password,
         passHash,
@@ -51,7 +52,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     const payload = jwt.verify(token, TOKEN_REFRESH_SECRET) as TokenPayload;
 
     if (payload.roles[UserRoles.Admin] || payload.roles[UserRoles.RootAdmin]) {
-      const admin = await AdminModel.findOne<AdminDocument>({ uniqId: { $eq: payload.uniqId } });
+      const admin = await AdminModel.findById<AdminDocument>(payload.id);
 
       if (!admin || admin.disabled) {
         res.status(403).json({ message: "Access denied" });
@@ -60,6 +61,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     }
 
     const newAccessToken = createAccessToken({
+      id: payload.id,
       uniqId: payload.uniqId,
       roles: payload.roles,
       createdAt: Date.now(),
@@ -75,13 +77,3 @@ export const refreshToken = async (req: Request, res: Response) => {
     res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-
-// export const logout = async (req: Request, res: Response) => {
-//   res.clearCookie(CookiesKeys.refreshToken, {
-//     httpOnly: true,
-//     sameSite: "strict",
-//     secure: process.env.NODE_ENV !== "development",
-//     path: "/"
-//   });
-//   res.sendStatus(200);
-// };

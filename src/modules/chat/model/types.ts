@@ -2,6 +2,7 @@ export interface ChatProps {
   chatId: string;
   members: string[];
   lastMessage: string,
+  support?: boolean;
 }
 
 export interface MessageProps {

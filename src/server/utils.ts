@@ -2,29 +2,38 @@ import { composeChatId } from "../modules/chat/utils";
 import { ChatDocument, ChatModel } from "../modules/chat/model/chat";
 import { MessageDocument, MessageModel } from "../modules/chat/model/message";
 import { DefaultEventsMap, Server } from "socket.io";
+import { Types } from "mongoose";
 
 interface FindChatProps {
   from: string;
   to: string;
   lastMessage: string;
   knownChatId?: string;
+  support?: boolean;
 }
 
 export const findChat = async ({
   from,
   to,
   lastMessage,
-  knownChatId
+  knownChatId,
+  support
 }: FindChatProps) => {
   const chatId = knownChatId ?? composeChatId({ from, to });
+
+  const setOnInsert: Record<string, any> = {
+    chatId,
+    members: [from, to],
+  };
+
+  if (typeof support === "boolean") {
+    setOnInsert.support = support;
+  }
 
   const chat = await ChatModel.findOneAndUpdate(
     { chatId },
     {
-      $setOnInsert: {
-        chatId,
-        members: [from, to]
-      },
+      $setOnInsert: setOnInsert,
       lastMessage,
       updatedAt: new Date(),
     },
@@ -57,9 +66,9 @@ export const createMessage = async ({
 };
 
 interface SendMessageProps {
-  users: Map<string, string>;
-  from: string;
-  to: string;
+  users: Map<Types.ObjectId, string>;
+  from: Types.ObjectId;
+  to: Types.ObjectId;
   text: string;
   chat: ChatDocument;
   message: MessageDocument;

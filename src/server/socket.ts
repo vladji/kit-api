@@ -6,8 +6,9 @@ import { CHAT_SUPPORT } from "./constants";
 import { createMessage, findChat, handleChatError, sendMessage } from "./utils";
 import { AdminModel } from "../modules/admin/admin.model";
 import { socketAuthMiddleware } from "./socketAuthMiddleware";
+import { Types } from "mongoose";
 
-const users = new Map<string, string>();
+const users = new Map<Types.ObjectId, string>();
 
 export const registerSocketHandlers = () => {
   try {
@@ -24,7 +25,7 @@ export const registerSocketHandlers = () => {
     io.on("connection", (socket: CustomSocket) => {
       console.log("🔌 New client connected:", socket.id);
 
-      socket.on("register", (userId: string) => {
+      socket.on("register", (userId: Types.ObjectId) => {
         users.set(userId, socket.id);
         socket.userId = userId;
         console.log(`✅ Registered user ${userId}`);
@@ -59,7 +60,8 @@ export const registerSocketHandlers = () => {
             const { chatId, chat } = await findChat({
               from,
               to,
-              lastMessage: text
+              lastMessage: text,
+              support: true,
             });
 
             const message = await createMessage({ chatId, from, to, text });

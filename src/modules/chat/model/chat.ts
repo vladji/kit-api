@@ -7,6 +7,7 @@ const ChatSchema = new mongoose.Schema<ChatDocument>({
   chatId: { type: String, required: true },
   members: [{ type: String, required: true }],
   lastMessage: { type: String, required: true },
+  support: { type: Boolean }
 }, {
   timestamps: true,
   toJSON: {

@@ -1,5 +1,9 @@
+import { Types } from "mongoose";
+
 export interface AdminProps {
+  id: Types.ObjectId;
   uniqId: string;
+  name: string;
   disabled: boolean;
   chatEnabled: boolean;
   chatNotificationEnabled: boolean;

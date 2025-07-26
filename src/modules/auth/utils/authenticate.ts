@@ -3,10 +3,12 @@ import { checkPassword } from "../../../app/crypto/checkPassword";
 import { createAccessToken, createRefreshToken } from "../../../app/jwt/create";
 import { TokenUserRoles } from "../../../app/jwt/types";
 import { UserRoles } from "../../user/types";
+import { Types } from "mongoose";
 
 const ROOT_ADMIN = process.env.ROOT_ADMIN_NAME!;
 
 interface AuthenticateProps {
+  id: Types.ObjectId;
   uniqId: string;
   password: string;
   passHash: string;
@@ -15,6 +17,7 @@ interface AuthenticateProps {
 }
 
 export const authenticate = async ({
+  id,
   uniqId,
   password,
   passHash,
@@ -31,17 +34,25 @@ export const authenticate = async ({
     };
   }
 
-  const adminRole: TokenUserRoles = uniqId === ROOT_ADMIN ? { [UserRoles.RootAdmin]: true } : roles;
+  const rolesObj = {
+    ...roles,
+  };
+
+  if (uniqId === ROOT_ADMIN) {
+    rolesObj[UserRoles.RootAdmin] = true;
+  }
 
   const accessToken = createAccessToken({
+    id,
     uniqId,
-    roles: adminRole,
+    roles: rolesObj,
     createdAt: Date.now(),
   });
 
   const refreshToken = createRefreshToken({
+    id,
     uniqId,
-    roles: adminRole,
+    roles: rolesObj,
     createdAt: Date.now(),
   });
 

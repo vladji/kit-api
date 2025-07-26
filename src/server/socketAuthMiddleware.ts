@@ -1,7 +1,8 @@
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { CustomSocket, SocketError } from "./types";
-import { AdminModel } from "../modules/admin/admin.model";
+import { AdminDocument, AdminModel } from "../modules/admin/admin.model";
 import { TokenPayload } from "../app/jwt/types";
+import { UserRoles } from "../modules/user/types";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
@@ -28,18 +29,20 @@ export const socketAuthMiddleware = async (
       return next(new Error(SocketError.InvalidToken));
     }
 
-    const admin = await AdminModel.findOne({ uniqId: { $eq: decoded.uniqId } });
+    if (decoded.roles[UserRoles.Admin] || decoded.roles[UserRoles.RootAdmin]) {
+      const admin = await AdminModel.findById<AdminDocument>(decoded.id);
 
-    if (!admin) {
-      return next(new Error(SocketError.AdminNotFound));
+      if (!admin) {
+        return next(new Error(SocketError.AdminNotFound));
+      }
+
+      if (admin.disabled) {
+        return next(new Error(SocketError.AccessDenied));
+      }
+
+      socket.admin = admin;
+      socket.userId = admin.id;
     }
-
-    if (admin.disabled) {
-      return next(new Error(SocketError.AccessDenied));
-    }
-
-    socket.admin = admin;
-    socket.userId = admin.id;
     next();
   } catch (err) {
     console.error("❌ Socket auth error:", err);
