@@ -3,7 +3,7 @@ import { checkApiKey } from "../../shared/middlewares/checkApiKey";
 
 import {
   createUser,
-  getUserByDbId,
+  getUserById,
   getUserUniqueId,
   updateUser
 } from "./controllers/profile";
@@ -11,10 +11,10 @@ import {
 const router = express.Router();
 
 // PROFILE
-router.get("/user/profile/db-id", checkApiKey, getUserByDbId);
-router.post("/user/profile/db-id", checkApiKey, createUser);
-router.post("/user/profile/update", checkApiKey, updateUser);
+router.get("/user/profile/unique/:uniqueId", checkApiKey, getUserUniqueId);
 
-router.get("/user/profile/unique-id", checkApiKey, getUserUniqueId);
+router.get("/user/profile/id/:id", checkApiKey, getUserById);
+router.post("/user/profile/id", checkApiKey, createUser);
+router.put("/user/profile/id/:id", checkApiKey, updateUser);
 
 export default router;

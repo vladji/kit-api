@@ -3,7 +3,7 @@ import { UserProps } from "./types";
 
 const Schema = mongoose.Schema;
 
-export type StoreDocument = Document & UserProps;
+export type UserDocument = Document & UserProps;
 
 const DeviceDataSchema = new Schema({
   deviceManufacturer: String,
@@ -11,11 +11,11 @@ const DeviceDataSchema = new Schema({
   deviceId: String,
 }, { _id: false });
 
-const UserSchema = new Schema<StoreDocument>({
+const UserSchema = new Schema<UserDocument>({
   uniqueId: { type: String, required: true },
   deviceData: DeviceDataSchema,
   publicName: { type: String },
-  avatar: { type: String },
+  avatarUrl: { type: String },
   stores: {
     type: [{
       type: Schema.Types.ObjectId,
@@ -31,7 +31,6 @@ const UserSchema = new Schema<StoreDocument>({
       ret.id = ret._id;
       delete ret._id;
       delete ret.__v;
-      delete ret.type;
     }
   }
 });
