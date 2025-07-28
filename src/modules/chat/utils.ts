@@ -1,11 +1,17 @@
 import { ChatMemberProps } from "./model/types";
 
-interface Props {
-  from: ChatMemberProps;
-  to: ChatMemberProps;
-}
+export const composeChatId = (members?: ChatMemberProps[]) => {
+  if (!members) {
+    throw new Error("Unknown chat members");
+  }
 
-export const composeChatId = ({ from, to }: Props) => {
-  const [userA, userB] = [from.id, to.id].sort();
-  return `chat-${userA.id}-${userB.id}`;
+  const sorted = [...members].sort((a, b) =>
+    a.id.toString().localeCompare(b.id.toString())
+  );
+
+  const string = sorted
+    .map((member) => member.id.toString())
+    .join("-");
+
+  return `chat-${string}`;
 };

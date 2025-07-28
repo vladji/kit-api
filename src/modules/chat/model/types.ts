@@ -1,9 +1,10 @@
-import { Types } from "mongoose";
 import { UserRoles } from "../../user/types";
 
 export interface ChatMemberProps {
-  id: Types.ObjectId;
+  id: string;
   role: UserRoles;
+  name: string;
+  avatarUrl: string | null;
 }
 
 export interface ChatProps {
@@ -15,8 +16,8 @@ export interface ChatProps {
 
 export interface MessageProps {
   chatId: string;
-  from: Types.ObjectId;
-  to: Types.ObjectId;
+  from: string;
+  to: string;
   text: string;
   read: boolean;
   createdAt: Date;

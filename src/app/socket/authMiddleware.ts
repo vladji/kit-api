@@ -41,7 +41,7 @@ export const socketAuthMiddleware = async (
       }
 
       socket.admin = admin;
-      socket.userId = admin.id;
+      socket.userId = admin.id.toString();
     }
 
     next();

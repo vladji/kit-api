@@ -2,13 +2,17 @@ import { Server as SocketIOServer } from "socket.io";
 import { CustomSocket, PrivateMessageProps } from "./types";
 import { httpServer } from "../../app";
 import { ORIGIN } from "../../config/constants";
-import { createMessage, findChat, handleChatError, sendMessage } from "./utils";
-import { AdminModel } from "../../modules/admin/admin.model";
+import {
+  createMessage,
+  findChat,
+  findMembers,
+  handleChatError,
+  sendMessage
+} from "./utils";
 import { socketAuthMiddleware } from "./authMiddleware";
-import { Types } from "mongoose";
 import { UserRoles } from "../../modules/user/types";
 
-const users = new Map<Types.ObjectId, string>();
+const users = new Map<string, string>();
 
 export const registerSocketHandlers = () => {
   try {
@@ -25,7 +29,7 @@ export const registerSocketHandlers = () => {
     io.on("connection", (socket: CustomSocket) => {
       console.log("🔌 New client connected:", socket.id);
 
-      socket.on("register", (userId: Types.ObjectId) => {
+      socket.on("register", (userId: string) => {
         users.set(userId, socket.id);
         socket.userId = userId;
         console.log(`✅ Registered user ${userId}`);
@@ -35,10 +39,30 @@ export const registerSocketHandlers = () => {
         "private_message",
         async ({ from, to, knownChatId, text }: PrivateMessageProps) => {
           try {
+            if (!knownChatId) {
+              const members = await findMembers({ from, to });
+
+              const supportChat = to.role === UserRoles.Admin;
+              const { chatId, chat } = await findChat({
+                lastMessage: text,
+                knownMembers: members,
+                support: supportChat,
+              });
+
+              const message = await createMessage({ chatId, from, to, text });
+
+              await sendMessage({
+                users,
+                members,
+                text,
+                chat,
+                message,
+                io
+              });
+            }
+
             if (knownChatId) {
               const { chatId, chat } = await findChat({
-                from,
-                to,
                 lastMessage: text,
                 knownChatId
               });
@@ -47,56 +71,7 @@ export const registerSocketHandlers = () => {
 
               await sendMessage({
                 users,
-                from,
-                to,
-                text,
-                chat,
-                message,
-                io
-              });
-
-              return;
-            }
-
-            if (to.role === UserRoles.Admin) {
-              const { chatId, chat } = await findChat({
-                from,
-                to,
-                lastMessage: text,
-                support: true,
-              });
-
-              const message = await createMessage({ chatId, from, to, text });
-
-              const admins = await AdminModel.find({
-                disabled: false,
-                chatEnabled: true,
-              });
-
-              for (const admin of admins) {
-                await sendMessage({
-                  users,
-                  from,
-                  to,
-                  text,
-                  chat,
-                  message,
-                  io
-                });
-              }
-            } else {
-              const { chatId, chat } = await findChat({
-                from,
-                to,
-                lastMessage: text
-              });
-
-              const message = await createMessage({ chatId, from, to, text });
-
-              await sendMessage({
-                users,
-                from,
-                to,
+                members: chat.members,
                 text,
                 chat,
                 message,

@@ -1,10 +1,9 @@
 import { Socket } from "socket.io";
 import { AdminProps } from "../../modules/admin/types";
-import { Types } from "mongoose";
 import { ChatMemberProps } from "../../modules/chat/model/types";
 
 export interface CustomSocket extends Socket {
-  userId?: Types.ObjectId;
+  userId?: string;
   admin?: AdminProps;
 }
 

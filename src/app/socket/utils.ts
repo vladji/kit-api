@@ -5,36 +5,103 @@ import {
   MessageModel
 } from "../../modules/chat/model/message";
 import { DefaultEventsMap, Server } from "socket.io";
-import { Types } from "mongoose";
 import { ChatMemberProps } from "../../modules/chat/model/types";
+import { UserRoles } from "../../modules/user/types";
+import { AdminModel } from "../../modules/admin/admin.model";
+import { StoreModel } from "../../modules/store/store.model";
+import { UserModel } from "../../modules/user/user.model";
 
-interface FindChatProps {
+interface FindMembersProps {
   from: ChatMemberProps;
   to: ChatMemberProps;
+}
+
+export const findMembers = async ({ from, to }: FindMembersProps) => {
+  const members: ChatMemberProps[] = [from];
+
+  if (to.role === UserRoles.Admin) {
+    const admins = await AdminModel
+      .find(
+        { disabled: false, chatEnabled: true },
+        { _id: 1, name: 1 }
+      )
+      .lean();
+
+    members.push(
+      ...admins.map(({ _id, name }) => ({
+        id: _id.toString(),
+        role: UserRoles.Admin,
+        name,
+        avatarUrl: null,
+      }))
+    );
+  }
+
+  if (to.role === UserRoles.Store) {
+    const store = await StoreModel.findById(to.id)
+      .select("userId storeName storeAvatarUrl");
+
+    if (!store) {
+      throw new Error("Store not found");
+    }
+
+    const user = await UserModel.findById(store.userId).select("id");
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    members.push({
+      id: user.id,
+      role: UserRoles.Store,
+      name: store.storeName,
+      avatarUrl: store.storeAvatarUrl || null,
+    });
+  }
+
+  if (to.role === UserRoles.Client) {
+    const user = await UserModel.findById(to.id).select("publicName avatarUrl");
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    members.push({
+      id: user.id,
+      role: UserRoles.Client,
+      name: user.publicName || "User",
+      avatarUrl: user.avatarUrl || null,
+    });
+  }
+
+  return members;
+};
+
+interface FindChatProps {
   lastMessage: string;
   knownChatId?: string;
+  knownMembers?: ChatMemberProps[];
   support?: boolean;
 }
 
 export const findChat = async ({
-  from,
-  to,
   lastMessage,
   knownChatId,
+  knownMembers,
   support
 }: FindChatProps) => {
-  const chatId = knownChatId ?? composeChatId({ from, to });
+  const chatId = knownChatId ?? composeChatId(knownMembers);
 
   const setOnInsert: Record<string, any> = {
     chatId,
-    members: [from, to],
+    members: knownMembers,
   };
 
   if (typeof support === "boolean") {
     setOnInsert.support = support;
   }
 
-  const chat = await ChatModel.findOneAndUpdate(
+  const chat = await ChatModel.findOneAndUpdate<ChatDocument>(
     { chatId },
     {
       $setOnInsert: setOnInsert,
@@ -44,7 +111,10 @@ export const findChat = async ({
     { new: true, upsert: true }
   );
 
-  return { chatId, chat };
+  return {
+    chatId,
+    chat
+  };
 };
 
 interface CreateMessageProps {
@@ -70,9 +140,8 @@ export const createMessage = async ({
 };
 
 interface SendMessageProps {
-  users: Map<Types.ObjectId, string>;
-  from: ChatMemberProps;
-  to: ChatMemberProps;
+  users: Map<string, string>;
+  members: ChatMemberProps[];
   text: string;
   chat: ChatDocument;
   message: MessageDocument;
@@ -81,15 +150,14 @@ interface SendMessageProps {
 
 export const sendMessage = async ({
   users,
-  from,
-  to,
+  members,
   text,
   chat,
   message,
   io
 }: SendMessageProps) => {
-  [from.id, to.id].forEach((userId) => {
-    const socketId = users.get(userId);
+  members.forEach((userId) => {
+    const socketId = users.get(userId.id);
     if (socketId) {
       io.to(socketId).emit("private_message", message);
       io.to(socketId).emit("chat_updated", {
