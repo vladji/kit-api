@@ -37,10 +37,11 @@ const StoreSchema = new Schema<StoreDocument>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "user", // Название модели User
-    required: true,
     index: true, // Для быстрого поиска по владельцу
+    required: true,
   },
   storeName: { type: String, required: true },
+  storeAvatarUrl: { type: String },
   storeImageUrl: [{ type: String, required: true }],
   workingTime: {
     type: [StoreWorkingTimeSchema],

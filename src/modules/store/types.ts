@@ -27,6 +27,7 @@ interface ShowcaseProps {
 export interface StoreProps {
   userId: Types.ObjectId;
   storeName: string;
+  storeAvatarUrl: string;
   storeImageUrl: string[];
   workingTime?: StoreWorkingTime[];
   contacts?: StoreContactsProps;
