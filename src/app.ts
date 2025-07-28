@@ -5,7 +5,9 @@ import compression from "compression";
 import cors from "cors";
 import { errorHandler } from "./shared/middlewares/errorHandler";
 import cookieParser from "cookie-parser";
-import adminRoutes from "./modules/auth/auth.routes";
+import authRoutes from "./modules/auth/auth.routes";
+import adminRoutes from "./modules/admin/admin.routes";
+import storeRoutes from "./modules/store/store.routes";
 import userRoutes from "./modules/user/user.routes";
 import chatRoutes from "./modules/chat/chat.router";
 import rateLimit from "express-rate-limit";
@@ -39,7 +41,9 @@ const limiter = rateLimit({
 });
 
 app.use("/api", limiter);
+app.use("/api", authRoutes);
 app.use("/api", adminRoutes);
+app.use("/api", storeRoutes);
 app.use("/api", userRoutes);
 app.use("/api", chatRoutes);
 app.use("/api", errorHandler);
