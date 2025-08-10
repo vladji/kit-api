@@ -7,11 +7,16 @@ export interface ChatMemberProps {
   avatarUrl: string | null;
 }
 
+export interface SupportChatProps {
+  closed: boolean;
+  admin?: ChatMemberProps;
+}
+
 export interface ChatProps {
   chatId: string;
   members: ChatMemberProps[];
   lastMessage: string,
-  support?: boolean;
+  support?: SupportChatProps;
 }
 
 export interface MessageProps {

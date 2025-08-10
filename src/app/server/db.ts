@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = "mongodb+srv://vladji:hdOpL9$88**813@kit-1.ervirlm.mongodb.net/main?retryWrites=true&w=majority&appName=kit-1";
+const MONGO_URI = process.env.MONGO_URI!;
 
 export const connectToDB = async () => {
   try {

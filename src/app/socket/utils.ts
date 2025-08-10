@@ -5,7 +5,10 @@ import {
   MessageModel
 } from "../../modules/chat/model/message";
 import { DefaultEventsMap, Server } from "socket.io";
-import { ChatMemberProps } from "../../modules/chat/model/types";
+import {
+  ChatMemberProps,
+  SupportChatProps
+} from "../../modules/chat/model/types";
 import { UserRoles } from "../../modules/user/types";
 import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
@@ -79,6 +82,7 @@ export const findMembers = async ({ from, to }: FindMembersProps) => {
 
 interface FindChatProps {
   lastMessage: string;
+  from: ChatMemberProps;
   knownChatId?: string;
   knownMembers?: ChatMemberProps[];
   support?: boolean;
@@ -86,6 +90,7 @@ interface FindChatProps {
 
 export const findChat = async ({
   lastMessage,
+  from,
   knownChatId,
   knownMembers,
   support
@@ -97,8 +102,17 @@ export const findChat = async ({
     members: knownMembers,
   };
 
-  if (typeof support === "boolean") {
-    setOnInsert.support = support;
+  if (support) {
+    setOnInsert.support = {
+      closed: false,
+    };
+  }
+
+  if (from.role === UserRoles.Admin) {
+    setOnInsert.support = {
+      closed: false,
+      admin: from,
+    } as SupportChatProps;
   }
 
   const chat = await ChatModel.findOneAndUpdate<ChatDocument>(

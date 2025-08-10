@@ -19,7 +19,7 @@ export const getAllChats = async ({ req, res, role }: GetAllChatsProps) => {
     const [chats, total] = await Promise.all([
       ChatModel
         .find({
-          support: true,
+          support: { $exists: true },
           members: {
             $elemMatch: { role }
           }
@@ -28,7 +28,7 @@ export const getAllChats = async ({ req, res, role }: GetAllChatsProps) => {
         .skip(skip)
         .limit(limit),
       ChatModel.countDocuments({
-        support: true,
+        support: { $exists: true },
         members: {
           $elemMatch: { role }
         }

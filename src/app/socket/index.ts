@@ -42,8 +42,9 @@ export const registerSocketHandlers = () => {
             if (!knownChatId) {
               const members = await findMembers({ from, to });
 
-              const supportChat = to.role === UserRoles.Admin;
+              const supportChat = to.role === UserRoles.Admin || from.role === UserRoles.Admin;
               const { chatId, chat } = await findChat({
+                from,
                 lastMessage: text,
                 knownMembers: members,
                 support: supportChat,
@@ -62,9 +63,12 @@ export const registerSocketHandlers = () => {
             }
 
             if (knownChatId) {
+              const supportChat = from.role === UserRoles.Admin;
               const { chatId, chat } = await findChat({
+                from,
                 lastMessage: text,
-                knownChatId
+                knownChatId,
+                support: supportChat,
               });
 
               const message = await createMessage({ chatId, from, to, text });

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "NODE_ENV=development ts-node src/app.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "mongo:start": "docker-compose up -d",
+    "mongo:stop": "docker-compose down",
+    "mongo:logs": "docker-compose logs -f mongo"
   },
   "author": "vladji",
   "license": "ISC",

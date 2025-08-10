@@ -10,14 +10,14 @@ export const getMemberChats = async (req: Request, res: Response) => {
     } = pagination(req);
 
     const memberId = req.query.memberId as string;
-    const support = req.query.support === "true";
+    const isSupport = req.query.support === "true";
 
     const filter: any = {
       "members.id": memberId,
     };
 
-    if (req.query.support !== undefined) {
-      filter.support = support;
+    if (isSupport) {
+      filter.support = { $exists: true };
     }
 
     const [chats, total] = await Promise.all([
