@@ -11,6 +11,7 @@ const AdminSchema = new mongoose.Schema<AdminDocument>({
     unique: true,
   },
   name: { type: String, required: true },
+  avatarUrl: { type: String, required: true },
   disabled: { type: Boolean, default: false },
   chatEnabled: { type: Boolean, default: true },
   chatNotificationEnabled: { type: Boolean, default: true },

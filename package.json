@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "mongo:start": "docker-compose up -d",
     "mongo:stop": "docker-compose down",
-    "mongo:logs": "docker-compose logs -f mongo"
+    "mongo:logs": "docker-compose logs -f mongo",
+    "clean-chat-id": "npx ts-node src/test.ts"
   },
   "author": "vladji",
   "license": "ISC",

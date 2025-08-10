@@ -30,9 +30,14 @@ export const registerSocketHandlers = () => {
       console.log("🔌 New client connected:", socket.id);
 
       socket.on("register", (userId: string) => {
-        users.set(userId, socket.id);
-        socket.userId = userId;
-        console.log(`✅ Registered user ${userId}`);
+        if (!socket.admin) {
+          users.set(userId, socket.id);
+          socket.userId = userId;
+        }
+        if (socket.admin && socket.userId) {
+          users.set(socket.userId, socket.id);
+        }
+        console.log(`✅ Registered user ${socket.userId}`);
       });
 
       socket.on(

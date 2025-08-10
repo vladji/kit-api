@@ -4,6 +4,7 @@ export interface AdminProps {
   id: Types.ObjectId;
   uniqId: string;
   name: string;
+  avatarUrl: string;
   disabled: boolean;
   chatEnabled: boolean;
   chatNotificationEnabled: boolean;
