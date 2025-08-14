@@ -6,7 +6,7 @@ import { UserProps } from "../types";
 //const user = await UserModel.findById(id).populate("storeId");
 
 export const getUserUniqueId = async (req: Request, res: Response) => {
-  const uniqueId = req.query.uniqueId as string;
+  const uniqueId = req.params.uniqueId as string;
 
   UserModel
     .findOne({ uniqueId })

@@ -4,7 +4,7 @@ import { StoreModel } from "../store.model";
 
 export const getStore = async (req: Request, res: Response) => {
   try {
-    const storeId = req.query.storeId as string;
+    const storeId = req.params.storeId as string;
     const store = await StoreModel.findById(storeId);
     res.status(200).json(store);
     return;
