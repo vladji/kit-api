@@ -83,7 +83,7 @@ export const findMembers = async ({ from, to }: FindMembersProps) => {
 interface FindChatProps {
   lastMessage: string;
   from: ChatMemberProps;
-  knownChatId?: string;
+  knownChatId: string | null;
   knownMembers?: ChatMemberProps[];
   support?: boolean;
 }

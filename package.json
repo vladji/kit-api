@@ -10,7 +10,8 @@
     "mongo:start": "docker-compose up -d",
     "mongo:stop": "docker-compose down",
     "mongo:logs": "docker-compose logs -f mongo",
-    "clean-chat-id": "npx ts-node src/test.ts"
+    "clean-chat-id": "npx ts-node src/cleanMessages.ts",
+    "clean-all-users": "npx ts-node src/cleanUsers.ts"
   },
   "author": "vladji",
   "license": "ISC",

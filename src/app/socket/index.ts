@@ -53,6 +53,7 @@ export const registerSocketHandlers = () => {
                 lastMessage: text,
                 knownMembers: members,
                 support: supportChat,
+                knownChatId,
               });
 
               const message = await createMessage({ chatId, from, to, text });

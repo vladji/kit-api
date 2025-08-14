@@ -10,5 +10,6 @@ ADMIN.md
 ARCH.md
 sample.ts
 
-src/test.ts
+src/cleanMessages.ts
+src/cleanUsers.ts
 test.ts
