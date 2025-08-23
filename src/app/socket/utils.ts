@@ -13,6 +13,7 @@ import { UserRoles } from "../../modules/user/types";
 import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
 import { UserModel } from "../../modules/user/user.model";
+import { UserSocketMap } from "./types";
 
 interface FindMembersProps {
   from: ChatMemberProps;
@@ -144,17 +145,19 @@ export const createMessage = async ({
   to,
   text
 }: CreateMessageProps) => {
-  return await MessageModel.create({
+  const doc = await MessageModel.create({
     chatId,
     from: from.id,
     to: to.id,
     text,
     read: false,
   } as MessageDocument);
+
+  return doc.toObject();
 };
 
 interface SendMessageProps {
-  users: Map<string, string>;
+  userSockets: UserSocketMap;
   members: ChatMemberProps[];
   text: string;
   chat: ChatDocument;
@@ -163,21 +166,23 @@ interface SendMessageProps {
 }
 
 export const sendMessage = async ({
-  users,
+  userSockets,
   members,
   text,
   chat,
   message,
   io
 }: SendMessageProps) => {
-  members.forEach((userId) => {
-    const socketId = users.get(userId.id);
-    if (socketId) {
-      io.to(socketId).emit("private_message", message);
-      io.to(socketId).emit("chat_updated", {
-        chatId: chat.chatId,
-        lastMessage: text,
-        updatedAt: message.createdAt,
+  members.forEach((member) => {
+    const sockets = userSockets.get(member.id);
+    if (sockets) {
+      sockets.forEach((socketId) => {
+        io.to(socketId).emit("private_message", message);
+        io.to(socketId).emit("chat_updated", {
+          chatId: chat.chatId,
+          lastMessage: text,
+          updatedAt: message.createdAt,
+        });
       });
     }
   });

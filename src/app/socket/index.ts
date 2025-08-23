@@ -1,5 +1,5 @@
 import { Server as SocketIOServer } from "socket.io";
-import { CustomSocket, PrivateMessageProps } from "./types";
+import { CustomSocket, PrivateMessageProps, UserSocketMap } from "./types";
 import { httpServer } from "../../app";
 import { ORIGIN } from "../../config/constants";
 import {
@@ -12,7 +12,7 @@ import {
 import { socketAuthMiddleware } from "./authMiddleware";
 import { UserRoles } from "../../modules/user/types";
 
-const users = new Map<string, string>();
+const userSockets: UserSocketMap = new Map();
 
 export const registerSocketHandlers = () => {
   try {
@@ -31,13 +31,18 @@ export const registerSocketHandlers = () => {
 
       socket.on("register", (userId: string) => {
         if (!socket.admin) {
-          users.set(userId, socket.id);
           socket.userId = userId;
         }
-        if (socket.admin && socket.userId) {
-          users.set(socket.userId, socket.id);
+
+        if (socket.userId) {
+          if (!userSockets.has(socket.userId)) {
+            userSockets.set(socket.userId, new Set());
+          }
+          userSockets.get(socket.userId)!.add(socket.id);
+
+          socket.join(`user:${socket.userId}`);
+          console.log(`✅ Registered user ${socket.userId}`);
         }
-        console.log(`✅ Registered user ${socket.userId}`);
       });
 
       socket.on(
@@ -59,7 +64,7 @@ export const registerSocketHandlers = () => {
               const message = await createMessage({ chatId, from, to, text });
 
               await sendMessage({
-                users,
+                userSockets,
                 members,
                 text,
                 chat,
@@ -80,7 +85,7 @@ export const registerSocketHandlers = () => {
               const message = await createMessage({ chatId, from, to, text });
 
               await sendMessage({
-                users,
+                userSockets,
                 members: chat.members,
                 text,
                 chat,
@@ -91,11 +96,13 @@ export const registerSocketHandlers = () => {
           } catch (err) {
             handleChatError(err);
 
-            const fromSocketId = users.get(from.id);
-            if (fromSocketId) {
-              io.to(fromSocketId).emit("chat_error", {
-                message: "Unable to send message",
-                details: err instanceof Error ? err.message : "Unknown error"
+            const fromSockets = userSockets.get(from.id);
+            if (fromSockets) {
+              fromSockets.forEach((socketId) => {
+                io.to(socketId).emit("chat_error", {
+                  message: "Unable to send message",
+                  details: err instanceof Error ? err.message : "Unknown error"
+                });
               });
             }
           }
@@ -103,9 +110,14 @@ export const registerSocketHandlers = () => {
       );
 
       socket.on("disconnect", () => {
-        if (socket.userId) {
-          users.delete(socket.userId);
-          console.log(`❌ User ${socket.userId} disconnected`);
+        if (socket.userId && userSockets.has(socket.userId)) {
+          const sockets = userSockets.get(socket.userId)!;
+          sockets.delete(socket.id);
+
+          if (sockets.size === 0) {
+            userSockets.delete(socket.userId);
+          }
+          console.log(`🧹 Removed ${socket.id} for user ${socket.userId}, remaining: ${sockets.size}`);
         }
       });
     });

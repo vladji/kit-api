@@ -21,3 +21,5 @@ export interface PrivateMessageProps {
   text: string;
   knownChatId: string | null;
 }
+
+export type UserSocketMap = Map<string, Set<string>>;
