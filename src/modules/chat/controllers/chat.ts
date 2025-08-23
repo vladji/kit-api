@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ChatModel } from "../model/chat";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
-import { pagination } from "../../../shared/utils/pagination";
+import { pagination } from "../../../shared/pagination";
 
 export const getMemberChats = async (req: Request, res: Response) => {
   try {

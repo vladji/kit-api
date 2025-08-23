@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { pagination } from "../../../shared/utils/pagination";
+import { pagination } from "../../../shared/pagination";
 import { ChatModel } from "../../chat/model/chat";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
 import { UserRoles } from "../../user/types";
