@@ -10,6 +10,7 @@ ADMIN.md
 ARCH.md
 sample.ts
 
+src/cleanChat.ts
 src/cleanMessages.ts
 src/cleanUsers.ts
 test.ts

@@ -14,6 +14,7 @@ import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
 import { UserModel } from "../../modules/user/user.model";
 import { UserSocketMap } from "./types";
+import { toDTO } from "../../shared/utils/toDTO";
 
 interface FindMembersProps {
   from: ChatMemberProps;
@@ -152,8 +153,7 @@ export const createMessage = async ({
     text,
     read: false,
   } as MessageDocument);
-
-  return doc.toObject();
+  return toDTO(doc.toObject());
 };
 
 interface SendMessageProps {

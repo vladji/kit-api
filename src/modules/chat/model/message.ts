@@ -5,6 +5,10 @@ const Schema = mongoose.Schema;
 
 export type MessageDocument = Document & MessageProps;
 
+export interface MessageDTO extends MessageProps {
+  id: string;
+}
+
 const MessageSchema = new Schema<MessageDocument>({
   chatId: { type: String, required: true },
   from: { type: String, required: true },
@@ -13,13 +17,11 @@ const MessageSchema = new Schema<MessageDocument>({
   read: { type: Boolean }
 }, {
   timestamps: true,
-  toJSON: {
-    transform(doc, ret) {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-    }
-  }
 });
 
-export const MessageModel = mongoose.model("message", MessageSchema);
+MessageSchema.index({ chatId: 1, _id: -1 });
+
+export const MessageModel = mongoose.model<MessageDocument>(
+  "message",
+  MessageSchema
+);
