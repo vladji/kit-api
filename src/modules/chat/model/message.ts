@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 
 export type MessageDocument = Document & MessageProps;
 
-export interface MessageDTO extends MessageProps {
+export type MessageDTO = MessageProps & {
   id: string;
 }
 
