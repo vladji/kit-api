@@ -91,8 +91,8 @@ export const getMessages = async (req: Request, res: Response) => {
 
 export const getMessagesAroundFirstUnread = async (
   chatId: string,
-  limitBefore = 50,
-  limitAfter = 50
+  limitBefore = Math.round(MESSAGES_DEFAULT_LIMIT / 2),
+  limitAfter = Math.round(MESSAGES_DEFAULT_LIMIT / 2)
 ): Promise<{
   messagesAround: MessageDTO[],
   firstUnreadMessageId: string | null
@@ -141,13 +141,19 @@ export const getMessagesAroundFirstUnread = async (
 
 export const getMessagesAround = async (req: Request, res: Response) => {
   try {
-    const limit = Math.max(
+    const chatId = req.query.chatId as string;
+
+    const originalLimit = Math.max(
       MESSAGES_DEFAULT_LIMIT,
       parseInt(req.query.limit as string) || MESSAGES_DEFAULT_LIMIT
     );
-    const chatId = req.query.chatId as string;
 
-    const result = await getMessagesAroundFirstUnread(chatId, limit, limit);
+    const limit = Math.round(originalLimit / 2);
+    const result = await getMessagesAroundFirstUnread(
+      chatId,
+      limit,
+      limit
+    );
 
     if (result) {
       res.status(200).json(result);

@@ -1,4 +1,4 @@
-export const MESSAGES_DEFAULT_LIMIT = 50;
+export const MESSAGES_DEFAULT_LIMIT = 150;
 
 export enum Direction {
   Before = "before",
