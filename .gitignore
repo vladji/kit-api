@@ -13,4 +13,5 @@ sample.ts
 src/cleanChat.ts
 src/cleanMessages.ts
 src/cleanUsers.ts
+src/markAsUnread.ts
 test.ts
