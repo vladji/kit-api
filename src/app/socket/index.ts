@@ -1,5 +1,10 @@
 import { Server as SocketIOServer } from "socket.io";
-import { CustomSocket, PrivateMessageProps, UserSocketMap } from "./types";
+import {
+  CustomSocket,
+  MarkAsReadProps,
+  PrivateMessageProps,
+  UserSocketMap
+} from "./types";
 import { httpServer } from "../../app";
 import { ORIGIN } from "../../config/constants";
 import {
@@ -11,6 +16,8 @@ import {
 } from "./utils";
 import { socketAuthMiddleware } from "./authMiddleware";
 import { UserRoles } from "../../modules/user/types";
+import { MessageModel } from "../../modules/chat/model/message";
+import { AdminModel } from "../../modules/admin/admin.model";
 
 const userSockets: UserSocketMap = new Map();
 
@@ -44,6 +51,63 @@ export const registerSocketHandlers = () => {
           console.log(`✅ Registered user ${socket.userId}`);
         }
       });
+
+      socket.on(
+        "mark_as_read",
+        async ({
+          chatId,
+          lastSeenMessageId,
+          readerId,
+          isAdmin
+        }: MarkAsReadProps) => {
+          const docs = await MessageModel.find(
+            {
+              chatId,
+              to: readerId,
+              _id: { $lte: lastSeenMessageId },
+              read: false,
+            },
+            { _id: 1, from: 1 }
+          ).lean();
+
+          if (!docs.length) return;
+
+          const ids = docs.map((d) => d._id.toString());
+
+          await MessageModel.updateMany(
+            { _id: { $in: ids } },
+            { $set: { read: true } }
+          );
+
+          if (isAdmin) {
+            // 📌 Админ прочитал → уведомляем клиента
+            const clientId = docs[0].from.toString();
+            const sockets = userSockets.get(clientId) || [];
+            sockets.forEach((socketId) => {
+              io.to(socketId).emit("messages_marked_as_read", {
+                chatId,
+                messageIds: ids,
+              });
+            });
+          } else {
+            // 📌 Клиент прочитал → уведомляем всех активных админов
+            const admins = await AdminModel.find(
+              { disabled: false, chatEnabled: true },
+              { _id: 1 }
+            ).lean();
+
+            for (const admin of admins) {
+              const sockets = userSockets.get(admin._id.toString()) || [];
+              sockets.forEach((socketId) => {
+                io.to(socketId).emit("messages_marked_as_read", {
+                  chatId,
+                  messageIds: ids,
+                });
+              });
+            }
+          }
+        }
+      );
 
       socket.on(
         "private_message",
