@@ -22,4 +22,11 @@ export interface PrivateMessageProps {
   knownChatId: string | null;
 }
 
+export interface MarkAsReadProps {
+  chatId: string;
+  lastSeenMessageId: string;
+  readerId: ChatMemberProps;
+  isAdmin: boolean;
+}
+
 export type UserSocketMap = Map<string, Set<string>>;

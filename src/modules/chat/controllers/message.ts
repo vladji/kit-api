@@ -43,10 +43,10 @@ const getLatestMessages = async (
 ): Promise<MessageDTO[]> => {
   const docs = await MessageModel
     .find({ chatId })
-    .sort({ createdAt: -1 })
+    .sort({ _id: -1 })
     .limit(limit)
     .lean();
-  return toDTOs(docs);
+  return toDTOs(docs).reverse();
 };
 
 export const getMessages = async (req: Request, res: Response) => {
@@ -91,6 +91,7 @@ export const getMessages = async (req: Request, res: Response) => {
 
 export const getMessagesAroundFirstUnread = async (
   chatId: string,
+  readerId: string,
   limitBefore = Math.round(MESSAGES_DEFAULT_LIMIT / 2),
   limitAfter = Math.round(MESSAGES_DEFAULT_LIMIT / 2)
 ): Promise<{
@@ -99,20 +100,25 @@ export const getMessagesAroundFirstUnread = async (
 }> => {
   const firstUnreadDoc = await MessageModel.findOne({
     chatId,
+    to: readerId,
     read: false,
   })
     .sort({ _id: 1 })
     .lean();
 
   if (!firstUnreadDoc) {
+    const messagesAround = await getLatestMessages(
+      chatId,
+      limitBefore + limitAfter
+    );
+
     return {
-      messagesAround: await getLatestMessages(chatId, limitBefore + limitAfter),
+      messagesAround,
       firstUnreadMessageId: null,
     };
   }
 
   const firstUnread = toDTO(firstUnreadDoc) as MessageDTO;
-
   const objectId = new mongoose.Types.ObjectId(firstUnread.id);
 
   const beforeDocs = await MessageModel.find({
@@ -134,7 +140,7 @@ export const getMessagesAroundFirstUnread = async (
   const after = toDTOs(afterDocs) as MessageDTO[];
 
   return {
-    messagesAround: [...after, ...before],
+    messagesAround: [...before, ...after],
     firstUnreadMessageId: firstUnread.id,
   };
 };
@@ -142,6 +148,7 @@ export const getMessagesAroundFirstUnread = async (
 export const getMessagesAround = async (req: Request, res: Response) => {
   try {
     const chatId = req.query.chatId as string;
+    const readerId = req.query.readerId as string;
 
     const originalLimit = Math.max(
       MESSAGES_DEFAULT_LIMIT,
@@ -151,6 +158,7 @@ export const getMessagesAround = async (req: Request, res: Response) => {
     const limit = Math.round(originalLimit / 2);
     const result = await getMessagesAroundFirstUnread(
       chatId,
+      readerId,
       limit,
       limit
     );

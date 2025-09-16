@@ -17,11 +17,14 @@ import { UserSocketMap } from "./types";
 import { toDTO } from "../../shared/utils/toDTO";
 
 interface FindMembersProps {
-  from: ChatMemberProps;
   to: ChatMemberProps;
+  from: ChatMemberProps;
 }
 
-export const findMembers = async ({ from, to }: FindMembersProps) => {
+export const findMembers = async ({
+  to,
+  from
+}: FindMembersProps): Promise<ChatMemberProps[]> => {
   const members: ChatMemberProps[] = [from];
 
   if (to.role === UserRoles.Admin) {
