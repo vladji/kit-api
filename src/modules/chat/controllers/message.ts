@@ -51,10 +51,7 @@ const getLatestMessages = async (
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
-    const limit = Math.max(
-      MESSAGES_DEFAULT_LIMIT,
-      parseInt(req.query.limit as string) || MESSAGES_DEFAULT_LIMIT
-    );
+    const limit = parseInt(req.query.limit as string) || MESSAGES_DEFAULT_LIMIT;
     const chatId = req.query.chatId as string;
     const messageId = req.query.messageId as string;
     const direction = req.query.direction as Direction;
@@ -89,11 +86,10 @@ export const getMessages = async (req: Request, res: Response) => {
   }
 };
 
-export const getMessagesAroundFirstUnread = async (
+export const getMessagesBeforeUnread = async (
   chatId: string,
   readerId: string,
-  limitBefore = Math.round(MESSAGES_DEFAULT_LIMIT / 2),
-  limitAfter = Math.round(MESSAGES_DEFAULT_LIMIT / 2)
+  limit = MESSAGES_DEFAULT_LIMIT,
 ): Promise<{
   messagesAround: MessageDTO[],
   firstUnreadMessageId: string | null
@@ -109,7 +105,7 @@ export const getMessagesAroundFirstUnread = async (
   if (!firstUnreadDoc) {
     const messagesAround = await getLatestMessages(
       chatId,
-      limitBefore + limitAfter
+      limit
     );
 
     return {
@@ -119,48 +115,24 @@ export const getMessagesAroundFirstUnread = async (
   }
 
   const firstUnread = toDTO(firstUnreadDoc) as MessageDTO;
-  const objectId = new mongoose.Types.ObjectId(firstUnread.id);
-
-  const beforeDocs = await MessageModel.find({
-    chatId,
-    _id: { $lt: objectId },
-  })
-    .sort({ _id: -1 })
-    .limit(limitBefore)
-    .lean();
-  const before = toDTOs(beforeDocs).reverse() as MessageDTO[];
-
-  const afterDocs = await MessageModel.find({
-    chatId,
-    _id: { $gte: objectId },
-  })
-    .sort({ _id: 1 })
-    .limit(limitAfter + 1)
-    .lean();
-  const after = toDTOs(afterDocs) as MessageDTO[];
+  const before = await getMessagesBefore(chatId, firstUnread.id, limit);
 
   return {
-    messagesAround: [...before, ...after],
+    messagesAround: before,
     firstUnreadMessageId: firstUnread.id,
   };
 };
 
-export const getMessagesAround = async (req: Request, res: Response) => {
+export const getRecentlyMessages = async (req: Request, res: Response) => {
   try {
     const chatId = req.query.chatId as string;
     const readerId = req.query.readerId as string;
+    const limit = parseInt(req.query.limit as string) || MESSAGES_DEFAULT_LIMIT;
 
-    const originalLimit = Math.max(
-      MESSAGES_DEFAULT_LIMIT,
-      parseInt(req.query.limit as string) || MESSAGES_DEFAULT_LIMIT
-    );
-
-    const limit = Math.round(originalLimit / 2);
-    const result = await getMessagesAroundFirstUnread(
+    const result = await getMessagesBeforeUnread(
       chatId,
       readerId,
       limit,
-      limit
     );
 
     if (result) {
