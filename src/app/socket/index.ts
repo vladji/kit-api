@@ -84,7 +84,7 @@ export const registerSocketHandlers = () => {
             const clientId = docs[0].from.toString();
             const sockets = userSockets.get(clientId) || [];
             sockets.forEach((socketId) => {
-              io.to(socketId).emit("messages_marked_as_read", {
+              io.to(socketId).emit("marked_as_read_notify", {
                 chatId,
                 messageIds: ids,
               });
@@ -99,7 +99,7 @@ export const registerSocketHandlers = () => {
             for (const admin of admins) {
               const sockets = userSockets.get(admin._id.toString()) || [];
               sockets.forEach((socketId) => {
-                io.to(socketId).emit("messages_marked_as_read", {
+                io.to(socketId).emit("marked_as_read_notify", {
                   chatId,
                   messageIds: ids,
                 });
@@ -125,7 +125,13 @@ export const registerSocketHandlers = () => {
                 knownChatId,
               });
 
-              const message = await createMessage({ chatId, from, to, text });
+              const message = await createMessage({
+                chatId,
+                from,
+                to,
+                text,
+                isNewChat: true
+              });
 
               await sendMessage({
                 userSockets,
@@ -146,7 +152,13 @@ export const registerSocketHandlers = () => {
                 support: supportChat,
               });
 
-              const message = await createMessage({ chatId, from, to, text });
+              const message = await createMessage({
+                chatId,
+                from,
+                to,
+                text,
+                isNewChat: false
+              });
 
               await sendMessage({
                 userSockets,
