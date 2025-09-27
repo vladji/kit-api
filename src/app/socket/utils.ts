@@ -7,6 +7,7 @@ import {
 import { DefaultEventsMap, Server } from "socket.io";
 import {
   ChatMemberProps,
+  MessageProps,
   SupportChatProps
 } from "../../modules/chat/model/types";
 import { UserRoles } from "../../modules/user/types";
@@ -141,21 +142,30 @@ interface CreateMessageProps {
   from: ChatMemberProps;
   to: ChatMemberProps;
   text: string;
+  isNewChat: boolean;
 }
 
 export const createMessage = async ({
   chatId,
   from,
   to,
-  text
+  text,
+  isNewChat,
 }: CreateMessageProps) => {
-  const doc = await MessageModel.create({
+
+  const newMessage: Omit<MessageProps, "createdAt" | "updatedAt"> = {
     chatId,
     from: from.id,
     to: to.id,
     text,
     read: false,
-  } as MessageDocument);
+  };
+
+  if (isNewChat) {
+    newMessage.isInitialMessage = true;
+  }
+
+  const doc = await MessageModel.create(newMessage);
   return toDTO(doc.toObject());
 };
 

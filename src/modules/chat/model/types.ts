@@ -27,4 +27,5 @@ export interface MessageProps {
   read: boolean;
   createdAt: Date;
   updatedAt: Date;
+  isInitialMessage?: boolean;
 }

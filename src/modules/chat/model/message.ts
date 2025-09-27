@@ -14,7 +14,8 @@ const MessageSchema = new Schema<MessageDocument>({
   from: { type: String, required: true },
   to: { type: String, required: true },
   text: { type: String, required: true },
-  read: { type: Boolean }
+  read: { type: Boolean },
+  isInitialMessage: { type: Boolean },
 }, {
   timestamps: true,
 });
