@@ -27,6 +27,7 @@ export interface MarkAsReadProps {
   lastSeenMessageId: string;
   readerId: ChatMemberProps;
   isAdmin: boolean;
+  chatSupport: boolean;
 }
 
 export type UserSocketMap = Map<string, Set<string>>;

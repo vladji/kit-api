@@ -58,7 +58,8 @@ export const registerSocketHandlers = () => {
           chatId,
           lastSeenMessageId,
           readerId,
-          isAdmin
+          isAdmin,
+          chatSupport
         }: MarkAsReadProps) => {
           const docs = await MessageModel.find(
             {
@@ -79,17 +80,16 @@ export const registerSocketHandlers = () => {
             { $set: { read: true } }
           );
 
-          if (isAdmin) {
-            // 📌 Админ прочитал → уведомляем клиента
-            const clientId = docs[0].from.toString();
-            const sockets = userSockets.get(clientId) || [];
-            sockets.forEach((socketId) => {
-              io.to(socketId).emit("marked_as_read_notify", {
-                chatId,
-                messageIds: ids,
-              });
+          const clientId = docs[0].from.toString();
+          const sockets = userSockets.get(clientId) || [];
+          sockets.forEach((socketId) => {
+            io.to(socketId).emit("marked_as_read_notify", {
+              chatId,
+              messageIds: ids,
             });
-          } else {
+          });
+
+          if (chatSupport && !isAdmin) {
             // 📌 Клиент прочитал → уведомляем всех активных админов
             const admins = await AdminModel.find(
               { disabled: false, chatEnabled: true },
