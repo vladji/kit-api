@@ -14,8 +14,9 @@ import { UserRoles } from "../../modules/user/types";
 import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
 import { UserModel } from "../../modules/user/user.model";
-import { UserSocketMap } from "./types";
+import { ChatUpdatedProps, UserSocketMap } from "./types";
 import { toDTO } from "../../shared/utils/toDTO";
+import { CHAT_SUPPORT } from "../../modules/chat/model/constants";
 
 interface FindMembersProps {
   to: ChatMemberProps;
@@ -102,6 +103,15 @@ export const findChat = async ({
   support
 }: FindChatProps) => {
   const chatId = knownChatId ?? composeChatId(knownMembers);
+  let members: ChatMemberProps[] | undefined = knownMembers;
+
+  if (!members && knownChatId) {
+    const existing = await ChatModel.findOne(
+      { chatId: knownChatId },
+      { members: 1 }
+    );
+    members = existing?.members;
+  }
 
   const setOnInsert: Record<string, any> = {
     chatId,
@@ -121,10 +131,23 @@ export const findChat = async ({
     } as SupportChatProps;
   }
 
+  const incUnread: Record<string, number> = {};
+  // если сообщение в support и я не админ
+  if (support && from.role !== UserRoles.Admin) {
+    incUnread[`unreadCount.${CHAT_SUPPORT}`] = 1;
+  } else {
+    (members ?? []).forEach(member => {
+      if (member.id !== from.id) {
+        incUnread[`unreadCount.${member.id}`] = 1;
+      }
+    });
+  }
+
   const chat = await ChatModel.findOneAndUpdate<ChatDocument>(
     { chatId },
     {
       $setOnInsert: setOnInsert,
+      $inc: incUnread,
       lastMessage,
       updatedAt: new Date(),
     },
@@ -190,12 +213,14 @@ export const sendMessage = async ({
     const sockets = userSockets.get(member.id);
     if (sockets) {
       sockets.forEach((socketId) => {
-        io.to(socketId).emit("private_message", message);
-        io.to(socketId).emit("chat_updated", {
+        const chatUpdatedData: ChatUpdatedProps = {
           chatId: chat.chatId,
-          lastMessage: text,
+          lastMessageText: text,
           updatedAt: message.createdAt,
-        });
+          unreadCount: chat.unreadCount,
+        };
+        io.to(socketId).emit("private_message", message);
+        io.to(socketId).emit("chat_updated", chatUpdatedData);
       });
     }
   });

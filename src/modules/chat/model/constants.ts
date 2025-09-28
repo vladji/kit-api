@@ -1,3 +1,4 @@
+export const CHAT_SUPPORT = 'chat_support';
 export const MESSAGES_DEFAULT_LIMIT = 150;
 
 export enum Direction {

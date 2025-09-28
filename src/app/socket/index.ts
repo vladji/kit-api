@@ -1,5 +1,6 @@
 import { Server as SocketIOServer } from "socket.io";
 import {
+  ChatUpdatedProps,
   CustomSocket,
   MarkAsReadProps,
   PrivateMessageProps,
@@ -18,6 +19,7 @@ import { socketAuthMiddleware } from "./authMiddleware";
 import { UserRoles } from "../../modules/user/types";
 import { MessageModel } from "../../modules/chat/model/message";
 import { AdminModel } from "../../modules/admin/admin.model";
+import { ChatModel } from "../../modules/chat/model/chat";
 
 const userSockets: UserSocketMap = new Map();
 
@@ -58,8 +60,8 @@ export const registerSocketHandlers = () => {
           chatId,
           lastSeenMessageId,
           readerId,
-          isAdmin,
-          chatSupport
+          chatSupport,
+          anyAdmin,
         }: MarkAsReadProps) => {
           const docs = await MessageModel.find(
             {
@@ -73,37 +75,76 @@ export const registerSocketHandlers = () => {
 
           if (!docs.length) return;
 
-          const ids = docs.map((d) => d._id.toString());
-
+          const readMessageIds = docs.map((d) => d._id.toString());
           await MessageModel.updateMany(
-            { _id: { $in: ids } },
+            { _id: { $in: readMessageIds } },
             { $set: { read: true } }
           );
 
-          const clientId = docs[0].from.toString();
-          const sockets = userSockets.get(clientId) || [];
-          sockets.forEach((socketId) => {
-            io.to(socketId).emit("marked_as_read_notify", {
-              chatId,
-              messageIds: ids,
-            });
+          const unreadCount = await MessageModel.countDocuments({
+            chatId,
+            to: readerId,
+            read: false,
           });
 
-          if (chatSupport && !isAdmin) {
-            // 📌 Клиент прочитал → уведомляем всех активных админов
-            const admins = await AdminModel.find(
+          const chatUpdatedData: ChatUpdatedProps = {
+            chatId,
+            readMessageIds,
+          };
+
+          // уведомляю отправителя, что его сообщение прочитано (docs[0].from может быть только обычным ObjectId из mongo)
+          const recipientId = docs[0].from.toString();
+          const recipientSockets = userSockets.get(recipientId) || [];
+          recipientSockets.forEach((socketId) => {
+            io.to(socketId).emit("chat_updated", chatUpdatedData);
+          });
+
+          // readerId может быть как ObjectId из mongo так и собственной канстантой типа 'chat_support'
+          const chat = await ChatModel.findOneAndUpdate(
+            { chatId },
+            { $set: { [`unreadCount.${readerId}`]: unreadCount } },
+            { new: true }
+          );
+
+          // если я не админ (если я админ: readerId = 'chat_support') уведомляю себя, что сообщение мной прочитано
+          if (chat && !anyAdmin) {
+            const readerSockets = userSockets.get(readerId) || [];
+            readerSockets.forEach((socketId) => {
+              io.to(socketId).emit("chat_updated", {
+                chatId,
+                unreadCount: chat.unreadCount,
+              });
+            });
+          }
+
+          if (chatSupport) {
+            const allAdmins = await AdminModel.find(
               { disabled: false, chatEnabled: true },
               { _id: 1 }
             ).lean();
 
-            for (const admin of admins) {
-              const sockets = userSockets.get(admin._id.toString()) || [];
-              sockets.forEach((socketId) => {
-                io.to(socketId).emit("marked_as_read_notify", {
-                  chatId,
-                  messageIds: ids,
+            // если я админ, то уведомляю себя и всех остальных админов, что сообщение мной прочитано
+            if (chat && anyAdmin) {
+              for (const admin of allAdmins) {
+                const sockets = userSockets.get(admin._id.toString()) || [];
+                sockets.forEach((socketId) => {
+                  io.to(socketId).emit("chat_updated", {
+                    chatId,
+                    unreadCount: chat.unreadCount,
+                  });
                 });
-              });
+              }
+            }
+
+            //я не админ и уведомляю всех админов, кроме того с кем переписывался (тк его уже уведомил выше) что сообщение прочитано
+            if (!anyAdmin) {
+              const filteredAdmins = allAdmins.filter((admin) => admin._id.toString() !== recipientId);
+              for (const admin of filteredAdmins) {
+                const sockets = userSockets.get(admin._id.toString()) || [];
+                sockets.forEach((socketId) => {
+                  io.to(socketId).emit("chat_updated", chatUpdatedData);
+                });
+              }
             }
           }
         }
@@ -112,11 +153,12 @@ export const registerSocketHandlers = () => {
       socket.on(
         "private_message",
         async ({ from, to, knownChatId, text }: PrivateMessageProps) => {
+          const supportChat = to.role === UserRoles.Admin || from.role === UserRoles.Admin;
+
           try {
             if (!knownChatId) {
               const members = await findMembers({ from, to });
 
-              const supportChat = to.role === UserRoles.Admin || from.role === UserRoles.Admin;
               const { chatId, chat } = await findChat({
                 from,
                 lastMessage: text,
@@ -144,7 +186,6 @@ export const registerSocketHandlers = () => {
             }
 
             if (knownChatId) {
-              const supportChat = from.role === UserRoles.Admin;
               const { chatId, chat } = await findChat({
                 from,
                 lastMessage: text,

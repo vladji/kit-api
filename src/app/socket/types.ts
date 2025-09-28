@@ -1,6 +1,9 @@
 import { Socket } from "socket.io";
 import { AdminProps } from "../../modules/admin/types";
-import { ChatMemberProps } from "../../modules/chat/model/types";
+import {
+  ChatMemberProps,
+  UnreadCountProps
+} from "../../modules/chat/model/types";
 
 export interface CustomSocket extends Socket {
   userId?: string;
@@ -22,12 +25,20 @@ export interface PrivateMessageProps {
   knownChatId: string | null;
 }
 
+export interface ChatUpdatedProps {
+  chatId: string;
+  lastMessageText?: string;
+  updatedAt?: Date;
+  unreadCount?: UnreadCountProps;
+  readMessageIds?: string[];
+}
+
 export interface MarkAsReadProps {
   chatId: string;
   lastSeenMessageId: string;
-  readerId: ChatMemberProps;
-  isAdmin: boolean;
+  readerId: string;
   chatSupport: boolean;
+  anyAdmin: boolean;
 }
 
 export type UserSocketMap = Map<string, Set<string>>;
