@@ -1,8 +1,8 @@
 import { Server as SocketIOServer } from "socket.io";
 import {
-  ChatUpdatedProps,
   CustomSocket,
   MarkAsReadProps,
+  MessagesUpdatedProps,
   PrivateMessageProps,
   UserSocketMap
 } from "./types";
@@ -87,7 +87,7 @@ export const registerSocketHandlers = () => {
             read: false,
           });
 
-          const chatUpdatedData: ChatUpdatedProps = {
+          const chatUpdatedData: MessagesUpdatedProps = {
             chatId,
             readMessageIds,
           };
@@ -96,7 +96,7 @@ export const registerSocketHandlers = () => {
           const recipientId = docs[0].from.toString();
           const recipientSockets = userSockets.get(recipientId) || [];
           recipientSockets.forEach((socketId) => {
-            io.to(socketId).emit("chat_updated", chatUpdatedData);
+            io.to(socketId).emit("messages_updated", chatUpdatedData);
           });
 
           // readerId может быть как ObjectId из mongo так и собственной канстантой типа 'chat_support'
@@ -110,7 +110,7 @@ export const registerSocketHandlers = () => {
           if (chat && !anyAdmin) {
             const readerSockets = userSockets.get(readerId) || [];
             readerSockets.forEach((socketId) => {
-              io.to(socketId).emit("chat_updated", {
+              io.to(socketId).emit("messages_updated", {
                 chatId,
                 unreadCount: chat.unreadCount,
               });
@@ -128,7 +128,7 @@ export const registerSocketHandlers = () => {
               for (const admin of allAdmins) {
                 const sockets = userSockets.get(admin._id.toString()) || [];
                 sockets.forEach((socketId) => {
-                  io.to(socketId).emit("chat_updated", {
+                  io.to(socketId).emit("messages_updated", {
                     chatId,
                     unreadCount: chat.unreadCount,
                   });
@@ -142,7 +142,7 @@ export const registerSocketHandlers = () => {
               for (const admin of filteredAdmins) {
                 const sockets = userSockets.get(admin._id.toString()) || [];
                 sockets.forEach((socketId) => {
-                  io.to(socketId).emit("chat_updated", chatUpdatedData);
+                  io.to(socketId).emit("messages_updated", chatUpdatedData);
                 });
               }
             }
