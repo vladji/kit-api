@@ -21,21 +21,22 @@ const getMessagesBefore = async (
   return toDTOs(docs).reverse();
 };
 
-const getMessagesAfter = async (
+async function getMessagesAfter(
   chatId: string,
   messageId: string,
-  limit: number
-): Promise<MessageDTO[]> => {
+  limit: number,
+  includeCurrent: boolean = false,
+): Promise<MessageDTO[]> {
   const objectId = new mongoose.Types.ObjectId(messageId);
   const docs = await MessageModel.find({
     chatId,
-    _id: { $gt: objectId },
+    _id: { [includeCurrent ? "$gte" : "$gt"]: objectId },
   })
     .sort({ _id: 1 })
     .limit(limit)
     .lean();
   return toDTOs(docs);
-};
+}
 
 const getLatestMessages = async (
   chatId: string,
@@ -55,6 +56,7 @@ export const getMessages = async (req: Request, res: Response) => {
     const chatId = req.query.chatId as string;
     const messageId = req.query.messageId as string;
     const direction = req.query.direction as Direction;
+    const includeCurrent = req.query.includeCurrent === "true";
 
     if (!chatId) {
       res.status(400).json({ error: "chatId is required" });
@@ -67,7 +69,12 @@ export const getMessages = async (req: Request, res: Response) => {
     }
 
     if (messageId && direction === Direction.After) {
-      messages = await getMessagesAfter(chatId, messageId, limit);
+      messages = await getMessagesAfter(
+        chatId,
+        messageId,
+        limit,
+        includeCurrent,
+      );
     }
 
     if (!messageId) {
