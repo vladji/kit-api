@@ -14,7 +14,7 @@ import { UserRoles } from "../../modules/user/types";
 import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
 import { UserModel } from "../../modules/user/user.model";
-import { ChatUpdatedProps, UserSocketMap } from "./types";
+import { ChatUpdatedProps, MessageMetaProps, UserSocketMap } from "./types";
 import { toDTO } from "../../shared/utils/toDTO";
 import { CHAT_SUPPORT } from "../../modules/chat/model/constants";
 
@@ -213,13 +213,16 @@ export const sendMessage = async ({
     const sockets = userSockets.get(member.id);
     if (sockets) {
       sockets.forEach((socketId) => {
+        const messageMeta: MessageMetaProps = {
+          unreadCount: chat.unreadCount,
+        };
         const chatUpdatedData: ChatUpdatedProps = {
           chatId: chat.chatId,
           lastMessageText: text,
           updatedAt: message.createdAt,
           unreadCount: chat.unreadCount,
         };
-        io.to(socketId).emit("private_message", message);
+        io.to(socketId).emit("private_message", { message, meta: messageMeta });
         io.to(socketId).emit("chat_updated", chatUpdatedData);
       });
     }

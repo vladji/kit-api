@@ -25,6 +25,10 @@ export interface PrivateMessageProps {
   knownChatId: string | null;
 }
 
+export interface MessageMetaProps {
+  unreadCount: UnreadCountProps;
+}
+
 export interface ChatUpdatedProps {
   chatId: string;
   lastMessageText?: string;
