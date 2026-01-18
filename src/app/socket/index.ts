@@ -1,25 +1,19 @@
 import { Server as SocketIOServer } from "socket.io";
-import {
-  CustomSocket,
-  MarkAsReadProps,
-  MessagesUpdatedProps,
-  PrivateMessageProps,
-  UserSocketMap
-} from "./types";
+import { CustomSocket, PrivateMessageProps, UserSocketMap } from "./types";
 import { httpServer } from "../../app";
 import { ORIGIN } from "../../config/constants";
 import {
   createMessage,
-  findChat,
   findMembers,
   handleChatError,
-  sendMessage
+  sendMessage,
+  updateChat
 } from "./utils";
 import { socketAuthMiddleware } from "./authMiddleware";
 import { UserRoles } from "../../modules/user/types";
-import { MessageModel } from "../../modules/chat/model/message";
-import { AdminModel } from "../../modules/admin/admin.model";
 import { ChatModel } from "../../modules/chat/model/chat";
+import { composeChatId } from "../../modules/chat/utils";
+import { markAsRead } from "./markAsRead";
 
 const userSockets: UserSocketMap = new Map();
 
@@ -56,98 +50,7 @@ export const registerSocketHandlers = () => {
 
       socket.on(
         "mark_as_read",
-        async ({
-          chatId,
-          lastSeenMessageId,
-          readerId,
-          chatSupport,
-          anyAdmin,
-        }: MarkAsReadProps) => {
-          const docs = await MessageModel.find(
-            {
-              chatId,
-              to: readerId,
-              _id: { $lte: lastSeenMessageId },
-              read: false,
-            },
-            { _id: 1, from: 1 }
-          ).lean();
-
-          if (!docs.length) return;
-
-          const readMessageIds = docs.map((d) => d._id.toString());
-          await MessageModel.updateMany(
-            { _id: { $in: readMessageIds } },
-            { $set: { read: true } }
-          );
-
-          const unreadCount = await MessageModel.countDocuments({
-            chatId,
-            to: readerId,
-            read: false,
-          });
-
-          const chatUpdatedData: MessagesUpdatedProps = {
-            chatId,
-            readMessageIds,
-          };
-
-          // уведомляю отправителя, что его сообщение прочитано (docs[0].from может быть только обычным ObjectId из mongo)
-          const recipientId = docs[0].from.toString();
-          const recipientSockets = userSockets.get(recipientId) || [];
-          recipientSockets.forEach((socketId) => {
-            io.to(socketId).emit("messages_updated", chatUpdatedData);
-          });
-
-          // readerId может быть как ObjectId из mongo так и собственной канстантой типа 'chat_support'
-          const chat = await ChatModel.findOneAndUpdate(
-            { chatId },
-            { $set: { [`unreadCount.${readerId}`]: unreadCount } },
-            { new: true }
-          );
-
-          // если я не админ (если я админ: readerId = 'chat_support') уведомляю себя, что сообщение мной прочитано
-          if (chat && !anyAdmin) {
-            const readerSockets = userSockets.get(readerId) || [];
-            readerSockets.forEach((socketId) => {
-              io.to(socketId).emit("messages_updated", {
-                chatId,
-                unreadCount: chat.unreadCount,
-              });
-            });
-          }
-
-          if (chatSupport) {
-            const allAdmins = await AdminModel.find(
-              { disabled: false, chatEnabled: true },
-              { _id: 1 }
-            ).lean();
-
-            // если я админ, то уведомляю себя и всех остальных админов, что сообщение мной прочитано
-            if (chat && anyAdmin) {
-              for (const admin of allAdmins) {
-                const sockets = userSockets.get(admin._id.toString()) || [];
-                sockets.forEach((socketId) => {
-                  io.to(socketId).emit("messages_updated", {
-                    chatId,
-                    unreadCount: chat.unreadCount,
-                  });
-                });
-              }
-            }
-
-            //я не админ и уведомляю всех админов, кроме того с кем переписывался (тк его уже уведомил выше) что сообщение прочитано
-            if (!anyAdmin) {
-              const filteredAdmins = allAdmins.filter((admin) => admin._id.toString() !== recipientId);
-              for (const admin of filteredAdmins) {
-                const sockets = userSockets.get(admin._id.toString()) || [];
-                sockets.forEach((socketId) => {
-                  io.to(socketId).emit("messages_updated", chatUpdatedData);
-                });
-              }
-            }
-          }
-        }
+        markAsRead
       );
 
       socket.on(
@@ -159,13 +62,7 @@ export const registerSocketHandlers = () => {
             if (!knownChatId) {
               const members = await findMembers({ from, to });
 
-              const { chatId, chat } = await findChat({
-                from,
-                lastMessage: text,
-                knownMembers: members,
-                support: supportChat,
-                knownChatId,
-              });
+              const chatId = composeChatId(members);
 
               const message = await createMessage({
                 chatId,
@@ -175,39 +72,57 @@ export const registerSocketHandlers = () => {
                 isNewChat: true
               });
 
+              const chat = await updateChat({
+                chatId,
+                from,
+                members,
+                lastMessageId: message._id,
+                support: supportChat
+              });
+
               await sendMessage({
+                io,
                 userSockets,
                 members,
-                text,
                 chat,
                 message,
-                io
               });
             }
 
             if (knownChatId) {
-              const { chatId, chat } = await findChat({
-                from,
-                lastMessage: text,
-                knownChatId,
-                support: supportChat,
-              });
+              const existingChat = await ChatModel.findOne(
+                { chatId: knownChatId },
+                { members: 1 }
+              );
+
+              if (!existingChat) {
+                throw Error("Chat not found");
+              }
+
+              const { members } = existingChat;
 
               const message = await createMessage({
-                chatId,
+                chatId: knownChatId,
                 from,
                 to,
                 text,
                 isNewChat: false
               });
 
+              const chat = await updateChat({
+                chatId: knownChatId,
+                from,
+                members,
+                lastMessageId: message._id,
+                support: supportChat
+              });
+
               await sendMessage({
+                io,
                 userSockets,
-                members: chat.members,
-                text,
+                members,
                 chat,
                 message,
-                io
               });
             }
           } catch (err) {

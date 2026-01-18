@@ -1,10 +1,8 @@
-import { composeChatId } from "../../modules/chat/utils";
 import { ChatDocument, ChatModel } from "../../modules/chat/model/chat";
 import {
   MessageDocument,
   MessageModel
 } from "../../modules/chat/model/message";
-import { DefaultEventsMap, Server } from "socket.io";
 import {
   ChatMemberProps,
   MessageProps,
@@ -14,9 +12,9 @@ import { UserRoles } from "../../modules/user/types";
 import { AdminModel } from "../../modules/admin/admin.model";
 import { StoreModel } from "../../modules/store/store.model";
 import { UserModel } from "../../modules/user/user.model";
-import { ChatUpdatedProps, MessageMetaProps, UserSocketMap } from "./types";
-import { toDTO } from "../../shared/utils/toDTO";
+import { BaseSocketProps, ChatUpdatedProps, MessageMetaProps } from "./types";
 import { CHAT_SUPPORT } from "../../modules/chat/model/constants";
+import { Types } from "mongoose";
 
 interface FindMembersProps {
   to: ChatMemberProps;
@@ -87,35 +85,55 @@ export const findMembers = async ({
   return members;
 };
 
-interface FindChatProps {
-  lastMessage: string;
+interface CreateMessageProps {
+  chatId: string;
   from: ChatMemberProps;
-  knownChatId: string | null;
-  knownMembers?: ChatMemberProps[];
+  to: ChatMemberProps;
+  text: string;
+  isNewChat: boolean;
+}
+
+export const createMessage = async ({
+  chatId,
+  from,
+  to,
+  text,
+  isNewChat,
+}: CreateMessageProps) => {
+  const newMessage: Omit<MessageProps, "createdAt" | "updatedAt"> = {
+    chatId,
+    from: from.id,
+    to: to.id,
+    text,
+    read: false,
+  };
+
+  if (isNewChat) {
+    newMessage.isInitialMessage = true;
+  }
+
+  return await MessageModel.create(newMessage);
+  // return toDTO(doc.toObject());
+};
+
+interface UpdateChatProps {
+  chatId: string;
+  from: ChatMemberProps;
+  members: ChatMemberProps[];
+  lastMessageId: Types.ObjectId;
   support?: boolean;
 }
 
-export const findChat = async ({
-  lastMessage,
+export const updateChat = async ({
+  chatId,
   from,
-  knownChatId,
-  knownMembers,
+  members,
+  lastMessageId,
   support
-}: FindChatProps) => {
-  const chatId = knownChatId ?? composeChatId(knownMembers);
-  let members: ChatMemberProps[] | undefined = knownMembers;
-
-  if (!members && knownChatId) {
-    const existing = await ChatModel.findOne(
-      { chatId: knownChatId },
-      { members: 1 }
-    );
-    members = existing?.members;
-  }
-
+}: UpdateChatProps) => {
   const setOnInsert: Record<string, any> = {
     chatId,
-    members: knownMembers,
+    members,
   };
 
   if (support) {
@@ -136,75 +154,36 @@ export const findChat = async ({
   if (support && from.role !== UserRoles.Admin) {
     incUnread[`unreadCount.${CHAT_SUPPORT}`] = 1;
   } else {
-    (members ?? []).forEach(member => {
+    members.forEach(member => {
       if (member.id !== from.id) {
         incUnread[`unreadCount.${member.id}`] = 1;
       }
     });
   }
 
-  const chat = await ChatModel.findOneAndUpdate<ChatDocument>(
+  return ChatModel.findOneAndUpdate<ChatDocument>(
     { chatId },
     {
       $setOnInsert: setOnInsert,
       $inc: incUnread,
-      lastMessage,
-      updatedAt: new Date(),
+      $set: {
+        lastMessage: lastMessageId,
+        updatedAt: new Date(),
+      },
     },
     { new: true, upsert: true }
   );
-
-  return {
-    chatId,
-    chat
-  };
 };
 
-interface CreateMessageProps {
-  chatId: string;
-  from: ChatMemberProps;
-  to: ChatMemberProps;
-  text: string;
-  isNewChat: boolean;
-}
-
-export const createMessage = async ({
-  chatId,
-  from,
-  to,
-  text,
-  isNewChat,
-}: CreateMessageProps) => {
-
-  const newMessage: Omit<MessageProps, "createdAt" | "updatedAt"> = {
-    chatId,
-    from: from.id,
-    to: to.id,
-    text,
-    read: false,
-  };
-
-  if (isNewChat) {
-    newMessage.isInitialMessage = true;
-  }
-
-  const doc = await MessageModel.create(newMessage);
-  return toDTO(doc.toObject());
-};
-
-interface SendMessageProps {
-  userSockets: UserSocketMap;
+interface SendMessageProps extends BaseSocketProps {
   members: ChatMemberProps[];
-  text: string;
   chat: ChatDocument;
   message: MessageDocument;
-  io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
 }
 
 export const sendMessage = async ({
   userSockets,
   members,
-  text,
   chat,
   message,
   io
@@ -218,9 +197,6 @@ export const sendMessage = async ({
         };
         const chatUpdatedData: ChatUpdatedProps = {
           chatId: chat.chatId,
-          lastMessageText: text,
-          updatedAt: message.createdAt,
-          unreadCount: chat.unreadCount,
         };
         io.to(socketId).emit("private_message", { message, meta: messageMeta });
         io.to(socketId).emit("chat_updated", chatUpdatedData);
