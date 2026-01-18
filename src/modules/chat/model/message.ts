@@ -5,11 +5,7 @@ const Schema = mongoose.Schema;
 
 export type MessageDocument = Document & MessageProps;
 
-export type MessageDTO = MessageProps & {
-  id: string;
-}
-
-const MessageSchema = new Schema<MessageDocument>({
+export const MessageSchema = new Schema<MessageDocument>({
   chatId: { type: String, required: true },
   from: { type: String, required: true },
   to: { type: String, required: true },

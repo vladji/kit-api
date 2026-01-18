@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import { MessageDTO, MessageModel } from "../model/message";
+import { MessageModel } from "../model/message";
 import { errorHandler } from "../../../shared/middlewares/errorHandler";
 import { Direction, MESSAGES_DEFAULT_LIMIT } from "../model/constants";
 import mongoose from "mongoose";
 import { toDTO, toDTOs } from "../../../shared/utils/toDTO";
+import { MessageDTO } from "../model/types";
 
 const getMessagesBefore = async (
   chatId: string,

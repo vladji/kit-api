@@ -26,7 +26,11 @@ export const getAllChats = async ({ req, res, role }: GetAllChatsProps) => {
         })
         .sort({ updatedAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .populate({
+          path: "lastMessage",
+          select: "_id text from to read updatedAt"
+        }),
       ChatModel.countDocuments({
         support: { $exists: true },
         members: {

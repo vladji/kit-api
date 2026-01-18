@@ -5,6 +5,13 @@ import {
   UnreadCountProps
 } from "../../modules/chat/model/types";
 
+export type TSocketIOServer = import("socket.io").Server;
+
+export interface BaseSocketProps {
+  io: TSocketIOServer;
+  userSockets: UserSocketMap;
+}
+
 export interface CustomSocket extends Socket {
   userId?: string;
   admin?: AdminProps;
@@ -32,8 +39,8 @@ export interface MessageMetaProps {
 export interface ChatUpdatedProps {
   chatId: string;
   lastMessageText?: string;
-  updatedAt: Date;
-  unreadCount: UnreadCountProps;
+  updatedAt?: Date;
+  unreadCount?: UnreadCountProps;
 }
 
 export interface MessagesUpdatedProps {
@@ -42,7 +49,7 @@ export interface MessagesUpdatedProps {
   readMessageIds?: string[];
 }
 
-export interface MarkAsReadProps {
+export interface MarkAsReadProps extends BaseSocketProps {
   chatId: string;
   lastSeenMessageId: string;
   readerId: string;

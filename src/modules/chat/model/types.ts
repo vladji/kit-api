@@ -14,14 +14,6 @@ export interface SupportChatProps {
 
 export type UnreadCountProps = Map<string, number>;
 
-export interface ChatProps {
-  chatId: string;
-  members: ChatMemberProps[];
-  unreadCount: UnreadCountProps;
-  lastMessage: string,
-  support?: SupportChatProps;
-}
-
 export interface MessageProps {
   chatId: string;
   from: string;
@@ -31,4 +23,16 @@ export interface MessageProps {
   createdAt: Date;
   updatedAt: Date;
   isInitialMessage?: boolean;
+}
+
+export interface ChatProps {
+  chatId: string;
+  members: ChatMemberProps[];
+  unreadCount: UnreadCountProps;
+  lastMessage: MessageProps,
+  support?: SupportChatProps;
+}
+
+export type MessageDTO = MessageProps & {
+  id: string;
 }

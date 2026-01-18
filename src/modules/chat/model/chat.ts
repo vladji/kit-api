@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { ChatMemberProps, ChatProps, SupportChatProps } from "./types";
 
 const Schema = mongoose.Schema;
@@ -33,7 +33,7 @@ const ChatSchema = new Schema<ChatDocument>({
   chatId: { type: String, required: true },
   members: { type: [MemberSchema], required: true },
   unreadCount: UnreadCountSchema,
-  lastMessage: { type: String, required: true },
+  lastMessage: { type: Types.ObjectId, ref: "message" },
   support: { type: SupportSchema }
 }, {
   timestamps: true,
