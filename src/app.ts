@@ -28,7 +28,7 @@ app.use(cors({
   origin: ORIGIN,
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"]
 }));
 
 const limiter = rateLimit({
@@ -48,6 +48,6 @@ app.use("/api", userRoutes);
 app.use("/api", chatRoutes);
 app.use("/api", errorHandler);
 
-server();
+void server();
 
 export default app;

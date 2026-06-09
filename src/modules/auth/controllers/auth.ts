@@ -12,7 +12,6 @@ const TOKEN_REFRESH_SECRET = process.env.TOKEN_REFRESH_SECRET!;
 
 export const adminLogin = async (req: LoginRequest, res: Response) => {
   const { uniqId, password } = req.body;
-
   AdminModel
     .findOne({ uniqId: { $eq: uniqId } })
     .then(async (admin) => {
